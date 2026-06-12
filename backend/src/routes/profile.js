@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { Users, Matches } from '../db.js';
-import { requireAuth } from '../auth.js';
+import { requireAuth, rejectGuests } from '../auth.js';
 
 const r = Router();
 
@@ -59,7 +59,7 @@ r.get('/match-history/full', requireAuth, (req, res) => {
 });
 
 /* Save one completed match record (idempotent on client_id) */
-r.post('/matches', requireAuth, (req, res) => {
+r.post('/matches', requireAuth, rejectGuests, (req, res) => {
   const rec = req.body;
   if (!rec || !rec.id || !rec.result || !rec.score || !Array.isArray(rec.rounds))
     return res.status(400).json({ error: 'Malformed match record.' });
@@ -85,7 +85,7 @@ r.post('/matches', requireAuth, (req, res) => {
 });
 
 /* Bulk import (one-time sync of pre-account localStorage history) */
-r.post('/matches/import', requireAuth, (req, res) => {
+r.post('/matches/import', requireAuth, rejectGuests, (req, res) => {
   const records = Array.isArray(req.body?.records) ? req.body.records : [];
   let saved = 0;
   for (const rec of records.slice(0, 500)) {

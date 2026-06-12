@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSocket } from '../socket';
+import { useAuth } from '../auth/AuthContext';
 import { Card, CardFace, GLYPH, SUITNAME, isRed, sameCard, toast } from '../components/ui';
 
 /* Server snapshot shape (personalized). */
@@ -24,10 +25,13 @@ const SEATS = ['A', 'B', 'C', 'D'];
 const TEAM = (s: string) => (s === 'A' || s === 'C') ? 'AC' : 'BD';
 const SUIT_ORDER = ['S', 'H', 'D', 'C'];
 
+const GUEST_HISTORY_CAP = 10;
+
 export default function OnlineMatch({ code, spectator, onExit }: {
   code: string; spectator: boolean; onExit: () => void;
 }) {
   const nav = useNavigate();
+  const { isGuest } = useAuth();
   const [st, setSt] = useState<Snap | null>(null);
   const [banner, setBanner] = useState<{ html: JSX.Element; gold?: boolean } | null>(null);
   const [resolved, setResolved] = useState<{ winner: string; winCard: Card } | null>(null);
@@ -77,7 +81,19 @@ export default function OnlineMatch({ code, spectator, onExit }: {
         flash(<><b>{e.winner} wins R{e.round}</b> ({e.why})<small>pile charges to {e.pileAfter}</small></>, 2000);
       }
     };
-    const onFinish = ({ record }: any) => setFinished(record);
+    const onFinish = ({ record }: any) => {
+      setFinished(record);
+      // Guests have no cloud history — keep the record locally so replays,
+      // reports, and statistics work (most recent 10 matches).
+      if (isGuest && !spectator) {
+        try {
+          const hist = JSON.parse(localStorage.getItem('ec.history.v1') || '[]');
+          if (!hist.some((r: any) => r.id === record.id)) hist.unshift(record);
+          if (hist.length > GUEST_HISTORY_CAP) hist.length = GUEST_HISTORY_CAP;
+          localStorage.setItem('ec.history.v1', JSON.stringify(hist));
+        } catch {}
+      }
+    };
     const onErr = (e: any) => { pending.current = false; toast(e.error, 'error'); };
 
     s.on('match_state', onState);
@@ -95,7 +111,7 @@ export default function OnlineMatch({ code, spectator, onExit }: {
       s.emit('room:unwatch', code); s.emit('spect:unwatch', code);
       clearInterval(tick); clearTimeout(bannerT.current);
     };
-  }, [code, spectator, flash, onExit]);
+  }, [code, spectator, flash, onExit, isGuest]);
 
   if (!st) return <div className="screen show" style={{ alignItems: 'center', justifyContent: 'center' }}><div className="spin">syncing with table…</div></div>;
 

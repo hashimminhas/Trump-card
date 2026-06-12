@@ -8,6 +8,7 @@ import Friends from './screens/Friends';
 import Rooms from './screens/Rooms';
 import Lobby from './screens/Lobby';
 import Play from './screens/Play';
+import Upgrade from './screens/Upgrade';
 import Forgot from './screens/Forgot';
 import Reset from './screens/Reset';
 import NotificationBell from './components/NotificationBell';
@@ -22,7 +23,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 }
 
 function Shell({ children }: { children: JSX.Element }) {
-  const { user, logout } = useAuth();
+  const { user, isGuest, logout } = useAuth();
   return (
     <div className="shell">
       <div className="shell-top">
@@ -30,14 +31,16 @@ function Shell({ children }: { children: JSX.Element }) {
         <nav className="shell-nav">
           <NavLink to="/" end>Home</NavLink>
           <NavLink to="/play">Play</NavLink>
-          <NavLink to="/profile">Profile</NavLink>
-          <NavLink to="/friends">Friends</NavLink>
+          {!isGuest && <NavLink to="/profile">Profile</NavLink>}
+          {!isGuest && <NavLink to="/friends">Friends</NavLink>}
           <NavLink to="/rooms">Rooms</NavLink>
         </nav>
         <span className="shell-spacer" />
-        <NotificationBell />
-        <span className="shell-user">{user?.username}</span>
-        <button className="btn btn-ghost btn-sm" onClick={logout}>Log out</button>
+        {isGuest
+          ? <NavLink to="/upgrade" className="btn btn-sm btn-upgrade">Create account</NavLink>
+          : <NotificationBell />}
+        <span className="shell-user">{user?.username}{isGuest ? ' (guest)' : ''}</span>
+        <button className="btn btn-ghost btn-sm" onClick={logout}>{isGuest ? 'Exit guest' : 'Log out'}</button>
       </div>
       {children}
     </div>
@@ -54,6 +57,7 @@ export default function App() {
         <Route path="/reset/:token" element={<Reset />} />
         <Route path="/play" element={<RequireAuth><Play /></RequireAuth>} />
         <Route path="/" element={<RequireAuth><Shell><Hub /></Shell></RequireAuth>} />
+        <Route path="/upgrade" element={<RequireAuth><Shell><Upgrade /></Shell></RequireAuth>} />
         <Route path="/profile" element={<RequireAuth><Shell><Profile /></Shell></RequireAuth>} />
         <Route path="/profile/:username" element={<RequireAuth><Shell><Profile /></Shell></RequireAuth>} />
         <Route path="/friends" element={<RequireAuth><Shell><Friends /></Shell></RequireAuth>} />

@@ -1,10 +1,11 @@
 import { FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 export default function Register() {
   const { register, user } = useAuth();
   const nav = useNavigate();
+  const loc = useLocation() as any;
   const [username, setU] = useState('');
   const [email, setE] = useState('');
   const [pw, setP] = useState('');
@@ -14,7 +15,7 @@ export default function Register() {
 
   async function submit(e: FormEvent) {
     e.preventDefault(); setErr(''); setBusy(true);
-    try { await register(username.trim(), email.trim(), pw); nav('/'); }
+    try { await register(username.trim(), email.trim(), pw); nav(loc.state?.from?.pathname || '/'); }
     catch (e: any) { setErr(e.message); }
     finally { setBusy(false); }
   }

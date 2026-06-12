@@ -7,7 +7,7 @@ import { TEMPLATE } from './template.js';
  * Returns an unmount() cleanup function.
  */
 export function mountElectronGame(root, opts = {}) {
-const { cloud = null, onExit = null } = opts;
+const { cloud = null, onExit = null, historyCap = 0 } = opts;
 root.innerHTML = TEMPLATE;
 /* =====================================================
    ELECTRON CARD — PHASE 2
@@ -679,7 +679,9 @@ function endMatch(){
     durationMs:Date.now()-G.t0
   };
   const hist=store.get('ec.history.v1')||[];
-  hist.unshift(rec);store.set('ec.history.v1',hist);
+  hist.unshift(rec);
+  if(historyCap>0&&hist.length>historyCap)hist.length=historyCap;
+  store.set('ec.history.v1',hist);
   lastRec=rec;
   cloud&&cloud.presence&&cloud.presence('online');
   cloud&&cloud.saveMatch&&cloud.saveMatch(rec).catch(()=>{});

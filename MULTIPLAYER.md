@@ -74,6 +74,15 @@ an email provider into `sendResetEmail`), friend notifications, host controls, m
 `EC_PAUSE_MS` winner-highlight pause (1900) · `EC_GAP_MS` between-round gap (1500) ·
 `EC_JWT_SECRET` · `EC_DB` · `PORT`
 
+## Guests (Phase 3C)
+
+Guests are first-class players at the table: a guest is a real (flagged) server identity with a
+silent JWT, so every guarantee on this page — personalized snapshots, validation, reconnect,
+timers — applies identically. The only difference is persistence: `match.js` skips cloud storage
+for guest participants; their copy of the final record arrives via `match_finished` and the
+client stores it locally (capped at 10). Upgrading a guest keeps the same user id and imports
+the local history, so nothing is lost.
+
 ## Verified by integration test
 
 `backend/test-multiplayer.js` (run with the server up) plays a complete match with two

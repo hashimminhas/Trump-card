@@ -27,7 +27,7 @@ export function roomState(room) {
     hostId: room.host_id,
     players: players.map(p => ({
       userId: p.user_id, username: p.username, seat: p.seat,
-      ready: !!p.ready, isHost: p.user_id === room.host_id
+      ready: !!p.ready, isHost: p.user_id === room.host_id, guest: !!p.is_guest
     })),
     bots,
     inMatch: !!matchFor(room.code)
@@ -185,6 +185,7 @@ r.post('/room/bot/remove', (req, res) => {
 
 /* ---------- friend invites ---------- */
 r.post('/room/invite', (req, res) => {
+  if (req.user.isGuest) return res.status(403).json({ error: 'Friend invites need an account — share the room code or link instead.' });
   const room = Rooms.anyRoomOf.get(req.user.id);
   if (!room || room.status !== 'open') return res.status(404).json({ error: 'You are not in an open room.' });
   const target = Users.byUsername.get(String(req.body?.username || ''));
@@ -202,7 +203,7 @@ r.post('/room/start', (req, res) => {
   const seating = {};
   for (const s of SEATS) {
     const p = players.find(x => x.seat === s);
-    if (p) seating[s] = { userId: p.user_id, username: p.username };
+    if (p) seating[s] = { userId: p.user_id, username: p.username, isGuest: !!p.is_guest };
     else if (bots[s]) seating[s] = { bot: bots[s] };
     else return res.status(409).json({ error: `Seat ${s} is empty — fill it with a player or a bot.` });
   }

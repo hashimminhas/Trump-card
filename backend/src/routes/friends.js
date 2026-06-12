@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { Users, Friends } from '../db.js';
-import { requireAuth } from '../auth.js';
+import { requireAuth, rejectGuests } from '../auth.js';
 import { presenceOf, notifyUser, pushNotification } from '../sockets.js';
 
 const r = Router();
 r.use(requireAuth);
 
-r.get('/friends', (req, res) => {
+r.get('/friends', rejectGuests, (req, res) => {
   const me = req.user.id;
   const friends = Friends.listAccepted.all({ me }).map(f => ({
     ...f, status: presenceOf(f.user_id)
@@ -18,7 +18,7 @@ r.get('/friends', (req, res) => {
   });
 });
 
-r.post('/friends/request', (req, res) => {
+r.post('/friends/request', rejectGuests, (req, res) => {
   const target = Users.byUsername.get(String(req.body?.username || ''));
   if (!target) return res.status(404).json({ error: 'No such user.' });
   if (target.id === req.user.id) return res.status(400).json({ error: "You can't befriend yourself." });
@@ -34,7 +34,7 @@ r.post('/friends/request', (req, res) => {
   res.json({ ok: true });
 });
 
-r.post('/friends/accept', (req, res) => {
+r.post('/friends/accept', rejectGuests, (req, res) => {
   const f = Friends.byId.get(req.body?.id | 0);
   if (!f || f.addressee_id !== req.user.id || f.status !== 'pending')
     return res.status(404).json({ error: 'No such pending request.' });
@@ -44,7 +44,7 @@ r.post('/friends/accept', (req, res) => {
   res.json({ ok: true });
 });
 
-r.delete('/friends/:id', (req, res) => {
+r.delete('/friends/:id', rejectGuests, (req, res) => {
   const f = Friends.byId.get(req.params.id | 0);
   if (!f) return res.status(404).json({ error: 'Not found.' });
   const info = Friends.remove.run(f.id, req.user.id, req.user.id);

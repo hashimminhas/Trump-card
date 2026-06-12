@@ -11,7 +11,7 @@ const SEAT_TEAM: Record<string, 'AC' | 'BD'> = { A: 'AC', C: 'AC', B: 'BD', D: '
 
 interface RoomT {
   code: string; status: string; locked: boolean; hostId: number;
-  players: { userId: number; username: string; seat: string; ready: boolean; isHost: boolean }[];
+  players: { userId: number; username: string; seat: string; ready: boolean; isHost: boolean; guest?: boolean }[];
   bots: Record<string, string>;
   inMatch: boolean;
 }
@@ -19,7 +19,8 @@ interface RoomT {
 export default function Lobby() {
   const { code = '' } = useParams();
   const nav = useNavigate();
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
+  const autoJoined = useRef(false);
   const [room, setRoom] = useState<RoomT | null>(null);
   const [err, setErr] = useState('');
   const [inMatch, setInMatch] = useState(false);
@@ -33,12 +34,21 @@ export default function Lobby() {
     api<{ room: RoomT }>(`/room/${code}`).then(d => {
       setRoom(d.room);
       if (d.room.status === 'playing' && d.room.players.some(p => p.userId === user?.id)) setInMatch(true);
+      // invite-link flow: arriving at an open room you're not in joins you instantly
+      const member = d.room.players.some(p => p.userId === user?.id);
+      const seatsFree = d.room.players.length + Object.keys(d.room.bots).length < 4;
+      if (!member && !autoJoined.current && d.room.status === 'open' && seatsFree) {
+        autoJoined.current = true;
+        api('/room/join', { method: 'POST', json: { code } })
+          .then((dd: any) => setRoom(dd.room))
+          .catch((e: any) => toast(e.message, 'error'));
+      }
     }).catch(e => setErr(e.message));
   }, [code, user?.id]);
 
   useEffect(() => {
     refresh();
-    api('/friends').then((d: any) => setFriends(d.friends)).catch(() => {});
+    if (!isGuest) api('/friends').then((d: any) => setFriends(d.friends)).catch(() => {});
     const s = getSocket();
     if (!s) return;
     s.emit('room:watch', code);
@@ -86,7 +96,8 @@ export default function Lobby() {
       <div className={`seat-slot ${p || bot ? 'filled' : ''}`} key={seat}>
         <span className="seat-letter" style={{ color: SEAT_TEAM[seat] === 'AC' ? 'var(--team-ac)' : 'var(--team-bd)' }}>{seat}</span>
         {p ? <>
-          <span style={{ fontWeight: 600 }}>{p.username}{p.isHost && ' 👑'}{p.userId === user?.id && ' (you)'}</span>
+          <span style={{ fontWeight: 600 }}>{p.username}{p.isHost && ' 👑'}{p.userId === user?.id && ' (you)'}
+            {p.guest && <span className="presence-label"> guest</span>}</span>
           <span style={{ flex: 1 }} />
           <span className={`ready-pill ${p.ready ? 'yes' : 'no'}`}>{p.ready ? 'READY' : 'WAITING'}</span>
           {isHost && p.userId !== user?.id && <>
@@ -116,6 +127,14 @@ export default function Lobby() {
     <div className="shell-main">
       <h1 style={{ textAlign: 'center' }}>Lobby</h1>
       <div className="lobby-code">{room.code}</div>
+      <div className="copy-row">
+        <button className="btn btn-ghost btn-sm" onClick={() => {
+          navigator.clipboard?.writeText(room.code).then(() => toast('Room code copied'));
+        }}>⧉ Copy code</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => {
+          navigator.clipboard?.writeText(`${location.origin}/room/${room.code}`).then(() => toast('Invite link copied — anyone can join, no account needed'));
+        }}>🔗 Copy invite link</button>
+      </div>
       <div className="muted-note" style={{ textAlign: 'center' }}>
         {room.players.length + Object.keys(room.bots).length}/4 seats filled
         {room.locked && ' · 🔒 seats locked'}
@@ -154,6 +173,7 @@ export default function Lobby() {
               {room.locked ? '🔓 Unlock seats' : '🔒 Lock seats'}</button>
             <button className="btn btn-ghost btn-sm" onClick={() => act('/room/close').then(() => nav('/rooms'))}>Close room</button>
             <span style={{ flex: 1 }} />
+            {isGuest && <span className="presence-label">Share the invite link above — friend invites unlock with an account.</span>}
             {friends.length > 0 && <>
               <span className="presence-label">Invite:</span>
               {friends.slice(0, 6).map(f =>

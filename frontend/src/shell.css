@@ -150,3 +150,41 @@
 .bell-time { color: var(--ink-dim); font-family: var(--mono); font-size: 10.5px; white-space: nowrap; }
 
 .mp-khoti { color: var(--charge); text-shadow: 0 0 30px rgba(242,179,61,.5); }
+
+/* ============ PHASE 3C — GUEST MODE ============ */
+.btn-guest {
+  width: 100%; margin-top: 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: rgba(242,179,61,.08); border: 1px solid rgba(242,179,61,.55);
+  color: var(--charge); font-weight: 700; padding: 11px 16px; border-radius: 12px;
+  box-shadow: 0 0 18px rgba(242,179,61,.12), inset 0 0 14px rgba(242,179,61,.05);
+  transition: all .16s;
+}
+.btn-guest:hover { background: rgba(242,179,61,.15); box-shadow: 0 0 26px rgba(242,179,61,.25); transform: translateY(-1px); }
+.btn-guest small { font-size: 10.5px; font-weight: 500; color: var(--ink-dim); letter-spacing: .04em; }
+
+.btn-upgrade {
+  background: linear-gradient(135deg, rgba(242,179,61,.2), rgba(242,179,61,.08));
+  border: 1px solid rgba(242,179,61,.6); color: var(--charge);
+  font-weight: 700; text-decoration: none; border-radius: 10px; padding: 7px 13px;
+}
+.btn-upgrade:hover { background: rgba(242,179,61,.22); }
+
+.upgrade-banner {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: rgba(242,179,61,.06); border: 1px solid rgba(242,179,61,.3);
+  border-radius: var(--radius); padding: 15px 18px; margin-bottom: 20px;
+  font-size: 13.5px; line-height: 1.55; color: var(--ink-dim);
+}
+.upgrade-banner > div { flex: 1; min-width: 240px; }
+.upgrade-banner b { color: var(--ink); }
+
+.invite-note {
+  background: rgba(242,179,61,.07); border: 1px solid rgba(242,179,61,.35);
+  border-radius: 11px; padding: 10px 13px; font-size: 13px; margin-bottom: 16px;
+  color: var(--ink-dim); line-height: 1.5;
+}
+.invite-note b { color: var(--charge); }
+.invite-note .mono { font-family: var(--mono); letter-spacing: .12em; }
+
+.copy-row { display: flex; gap: 10px; justify-content: center; margin: 8px 0 4px; flex-wrap: wrap; }

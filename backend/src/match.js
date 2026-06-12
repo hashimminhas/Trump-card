@@ -24,6 +24,8 @@ const BOT_MS = Number(process.env.EC_BOT_MS || 1700);      // bot think time
 const PAUSE_RESOLVE = Number(process.env.EC_PAUSE_MS || 1900); // winner-highlight pause
 const GAP = Number(process.env.EC_GAP_MS || 1500);             // between-round gap
 
+const DBG = !!process.env.EC_DEBUG;
+const dlog = (...a) => DBG && console.log('[match]', ...a);
 const matches = new Map(); // roomCode -> Match
 export const matchFor = code => matches.get(code) || null;
 export const matchOfUser = userId => {
@@ -134,6 +136,7 @@ export class Match {
     this._restOfDeck = deck.slice(ptr);
 
     M.phase = 'trump';
+    dlog(this.code, 'deal: dealer', M.dealer, 'chooser', M.chooser, 'misdeals', M.misdeals, 'chooserIsBot', this.isBot(M.chooser));
     this.emit('match_event', { type: 'dealing', dealer: M.dealer, chooser: M.chooser, misdeals: M.misdeals });
     if (this.isBot(M.chooser)) {
       this.timers.flow = setTimeout(() => this.applyTrump(M.chooser, botTrumpChoice(M, M.chooser)), BOT_MS);
@@ -149,10 +152,12 @@ export class Match {
 
   applyTrump(seat, suit, auto = false) {
     const M = this.M;
+    dlog(this.code, 'applyTrump', seat, suit, 'auto', auto, 'phase', M.phase);
     if (M.phase !== 'trump') return { error: 'Trump already chosen.' };
     if (seat !== M.chooser) return { error: 'Only the Trump Chooser may pick.' };
     if (!['S', 'H', 'D', 'C'].includes(suit)) return { error: 'Invalid suit.' };
     this.clearTimers();
+    M.turn = null; M.turnDeadline = null; // chooser's trump-timer turn must not leak into play phase
     M.trump = suit;
     // final deal +4 +4
     const order = []; const di = SEATS.indexOf(M.dealer);
@@ -194,6 +199,7 @@ export class Match {
     const M = this.M;
     this.clearTimers();
     const seat = M.turn;
+    dlog(this.code, 'armTurn', seat, this.isBot(seat) ? 'bot' : 'human');
     if (this.isBot(seat)) {
       M.turnDeadline = null;
       this.timers.bot = setTimeout(() => {
@@ -216,6 +222,7 @@ export class Match {
   /** Validate and apply a card play. All anti-cheat checks live here. */
   applyPlay(seat, card, auto = false, internal = false) {
     const M = this.M;
+    dlog(this.code, 'applyPlay', seat, card && (card.suit + card.rank), 'auto', auto, 'turn', M.turn, 'phase', M.phase);
     if (M.over || M.phase !== 'play') return { error: 'No round in progress.' };
     if (M.turn !== seat) return { error: 'Not your turn.' };
     if (!internal && this.isBot(seat)) return { error: 'That seat is a bot.' };
@@ -255,6 +262,7 @@ export class Match {
   resolveRound() {
     const M = this.M;
     const win = trickWinner(M, M.trick);
+    dlog(this.code, 'resolve R' + M.round, 'winner', win.seat);
     M.trick.forEach(p => M.pile.push(p.card));
 
     let collected = false, gained = 0;
@@ -301,6 +309,7 @@ export class Match {
 
   finish() {
     const M = this.M;
+    dlog(this.code, 'FINISH');
     M.over = true; M.phase = 'finished';
     this.clearTimers();
     const ac = M.banks.AC.length, bd = M.banks.BD.length, stranded = M.pile.length;
@@ -321,7 +330,7 @@ export class Match {
     const cols = record.collections;
     for (const s of SEATS) {
       const p = this.seating[s];
-      if (p.bot || !p.userId) continue;
+      if (p.bot || !p.userId || p.isGuest) continue; // guests keep history locally, not in the cloud
       Matches.insert.run({
         user_id: p.userId, client_id: record.id,
         result, score_ac: ac, score_bd: bd, stranded,

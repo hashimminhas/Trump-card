@@ -1,4 +1,4 @@
-# Electron Card — Phase 3B
+# Electron Card — Phase 3C
 
 Fully synchronized online multiplayer. The server owns the deck, hands, turns, timers, and every
 rule check; clients only render. All Phase 1/2 game rules and features are preserved — the complete
@@ -6,6 +6,30 @@ single-player game still runs unmodified inside the React shell, and online matc
 in the exact same format.
 
 See **MULTIPLAYER.md** for the architecture and the complete socket event reference.
+
+## What's new in 3C — Guest mode & room accessibility
+
+- **Play as Guest** on the sign-in screen: one click mints a lightweight server identity
+  (`Guest-48372`-style, no email, no password, flagged `is_guest`) and a silent JWT — so rooms,
+  sockets, authoritative matches, anti-cheat, and reconnect all work for guests **unchanged**.
+  The identity is stored locally (`ec.guest`) and resumes on return visits.
+- **Guest persistence is local**: single-player and online match records, replays, reports,
+  statistics, and settings live in the browser, capped at the **10 most recent matches**
+  (oldest deleted first). The server never stores guest match history.
+- **Room link sharing**: the lobby shows *Copy code* and *Copy invite link*
+  (`/room/ABX72Q`). Opening an invite link while signed out shows Login / Sign Up /
+  **Play as Guest**, and guests are seated instantly on arrival — no account wall.
+- **Guest limitations** (enforced server-side with friendly upsell messages): no friends list,
+  no friend invites, no cloud history, no cross-device sync, no account recovery.
+- **Account upgrade**: *Create account* converts the guest **in place** (same user id —
+  room membership survives), then the client imports its local history to the cloud:
+  matches, statistics, and replays are preserved.
+- New endpoints: `POST /api/guest`, `POST /api/guest/upgrade {username,email,password}`.
+- New test: `backend/test-guest.js` — guest host + registered peer + two bots play a full
+  match; asserts guest room creation/joining, local-only guest history, cloud copy for the
+  registered player, and the upgrade → import → stats flow.
+- Fixed a race where a human trump chooser's turn marker leaked into the play phase,
+  allowing a round-0 trick that could stall the match (also the cause of a rare 3B test flake).
 
 ## Stack
 

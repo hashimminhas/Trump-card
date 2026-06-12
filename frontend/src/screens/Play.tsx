@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
+import { useAuth } from '../auth/AuthContext';
 import { getSocket } from '../socket';
 // @ts-ignore — the game is a self-contained JS module (Phase 2 build, rules untouched)
 import { mountElectronGame } from '../game/engine.js';
@@ -31,13 +32,16 @@ function makeCloud() {
 export default function Play() {
   const ref = useRef<HTMLDivElement>(null);
   const nav = useNavigate();
+  const { isGuest } = useAuth();
   useEffect(() => {
     if (!ref.current) return;
     const unmount = mountElectronGame(ref.current, {
-      cloud: makeCloud(),
+      // Guests: pure localStorage, capped at the 10 most recent matches.
+      cloud: isGuest ? null : makeCloud(),
+      historyCap: isGuest ? 10 : 0,
       onExit: () => nav('/')
     });
     return () => { unmount(); getSocket()?.emit('presence:set', 'online'); };
-  }, [nav]);
+  }, [nav, isGuest]);
   return <div ref={ref} className="ec-game-root" />;
 }

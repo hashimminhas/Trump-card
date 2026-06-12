@@ -22,7 +22,7 @@ export async function api<T = any>(path: string, opts: RequestInit & { json?: an
   return data as T;
 }
 
-export interface User { id: number; username: string; email?: string; created_at: string; }
+export interface User { id: number; username: string; email?: string; created_at: string; is_guest?: number; }
 export interface Stats {
   matches: number; khoti: number; myWins: number; draws: number; winPct: number;
   favoriteTrump: string | null; largestCollection: number; totalCollections: number;

@@ -3,6 +3,7 @@ export function migrate(db) {
   const hasColumn = (table, col) =>
     db.prepare(`PRAGMA table_info(${table})`).all().some(c => c.name === col);
 
+  if (!hasColumn('users', 'is_guest')) db.exec(`ALTER TABLE users ADD COLUMN is_guest INTEGER NOT NULL DEFAULT 0`);
   if (!hasColumn('users', 'reset_token')) db.exec(`ALTER TABLE users ADD COLUMN reset_token TEXT`);
   if (!hasColumn('users', 'reset_expires')) db.exec(`ALTER TABLE users ADD COLUMN reset_expires TEXT`);
   if (!hasColumn('rooms', 'locked')) db.exec(`ALTER TABLE rooms ADD COLUMN locked INTEGER NOT NULL DEFAULT 0`);

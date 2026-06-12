@@ -37,6 +37,45 @@ r.post('/login', (req, res) => {
   res.json({ token: signToken(user), user });
 });
 
+/* ---------- guest mode (Phase 3C) ----------
+   A guest is a lightweight server identity: generated name, no email,
+   no password, flagged is_guest. The silent JWT makes every existing
+   system (sockets, rooms, authoritative matches, reconnect) work
+   unchanged. Guest match history stays in the browser. */
+r.post('/guest', (req, res) => {
+  let username, tries = 0;
+  do {
+    username = 'Guest-' + String(Math.floor(10000 + Math.random() * 90000));
+    tries++;
+  } while (Users.byUsername.get(username) && tries < 50);
+  if (Users.byUsername.get(username)) return res.status(500).json({ error: 'Could not allocate a guest id.' });
+  const email = username.toLowerCase() + '@guest.local';      // satisfies UNIQUE NOT NULL, never used
+  const hash = bcrypt.hashSync('guest:' + Math.random().toString(36), 6); // unusable password
+  const info = Users.createGuest.run(username, email, hash);
+  const user = Users.byId.get(info.lastInsertRowid);
+  res.json({ token: signToken(user), user });
+});
+
+/* Convert a guest into a real account — same user id, so any room
+   membership survives. The client then imports its local history. */
+r.post('/guest/upgrade', requireAuth, (req, res) => {
+  if (!req.user.isGuest) return res.status(400).json({ error: 'This account is not a guest.' });
+  const { username, email, password } = req.body || {};
+  if (!USERNAME_RE.test(username || ''))
+    return res.status(400).json({ error: 'Username must be 3–20 letters, numbers, or underscores.' });
+  if (!EMAIL_RE.test(email || ''))
+    return res.status(400).json({ error: 'Enter a valid email address.' });
+  if (!password || password.length < 8)
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  const u1 = Users.byUsername.get(username);
+  if (u1 && u1.id !== req.user.id) return res.status(409).json({ error: 'That username is taken.' });
+  if (Users.byEmail.get(email)) return res.status(409).json({ error: 'That email is already registered.' });
+  const info = Users.upgradeGuest.run(username, email, bcrypt.hashSync(password, 10), req.user.id);
+  if (!info.changes) return res.status(400).json({ error: 'Upgrade failed.' });
+  const user = Users.byId.get(req.user.id);
+  res.json({ token: signToken(user), user });
+});
+
 /* ---------- password reset (deferred from 3A) ----------
    Dev mode returns the reset link directly; production should
    email it instead (plug a provider into sendResetEmail). */

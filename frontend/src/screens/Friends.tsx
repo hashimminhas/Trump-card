@@ -2,10 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { getSocket } from '../socket';
+import { useAuth } from '../auth/AuthContext';
 
 interface FriendRow { friendship_id: number; user_id: number; username: string; status?: string; }
 
 export default function Friends() {
+  const { isGuest } = useAuth();
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [incoming, setIncoming] = useState<FriendRow[]>([]);
   const [outgoing, setOutgoing] = useState<FriendRow[]>([]);
@@ -14,8 +16,9 @@ export default function Friends() {
   const [msg, setMsg] = useState('');
 
   const refresh = useCallback(() => {
+    if (isGuest) return;
     api('/friends').then((d:any) => { setFriends(d.friends); setIncoming(d.incoming); setOutgoing(d.outgoing); });
-  }, []);
+  }, [isGuest]);
 
   useEffect(() => {
     refresh();
@@ -46,6 +49,18 @@ export default function Friends() {
   const dot = (st?: string) => <span className={`presence-dot ${st || 'offline'}`} title={st} />;
   const label = (st?: string) => st === 'in_match' ? 'in match' : (st || 'offline');
 
+  if (isGuest) {
+    return (
+      <div className="shell-main">
+        <h1>Friends</h1>
+        <div className="upgrade-banner">
+          <div><b>Friends need an account.</b> Create one free to add friends, see who's online,
+            and send room invites — your guest match history comes with you.</div>
+          <Link className="btn btn-upgrade btn-sm" to="/upgrade">Create account</Link>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="shell-main">
       <h1>Friends</h1>

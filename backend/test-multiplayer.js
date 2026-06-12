@@ -94,7 +94,7 @@ async function main() {
       const before = peer.state.handCounts;
       log(`  [peer] disconnecting at round ${peer.state.round} (hand ${peer.state.myHand.length})…`);
       peer.socket.disconnect();
-      await sleep(3500); // a turn or two auto-plays while away
+      await sleep(6500); // long enough that at least one of the peer's turns elapses while away
       peer.socket.connect();
       await sleep(700);
       log(`  [peer] reconnected at round ${peer.state.round}, hand restored: ${peer.state.myHand.length} cards, turn=${peer.state.turn}`);

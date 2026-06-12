@@ -25,9 +25,11 @@ export const Users = {
   create: db.prepare(`INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)`),
   byUsername: db.prepare(`SELECT * FROM users WHERE username = ?`),
   byEmail: db.prepare(`SELECT * FROM users WHERE email = ?`),
-  byId: db.prepare(`SELECT id, username, email, created_at FROM users WHERE id = ?`),
+  byId: db.prepare(`SELECT id, username, email, created_at, is_guest FROM users WHERE id = ?`),
   byLogin: db.prepare(`SELECT * FROM users WHERE username = ? OR email = ?`),
-  search: db.prepare(`SELECT id, username, created_at FROM users WHERE username LIKE ? LIMIT 10`),
+  search: db.prepare(`SELECT id, username, created_at FROM users WHERE username LIKE ? AND is_guest = 0 LIMIT 10`),
+  createGuest: db.prepare(`INSERT INTO users (username, email, password_hash, is_guest) VALUES (?, ?, ?, 1)`),
+  upgradeGuest: db.prepare(`UPDATE users SET username = ?, email = ?, password_hash = ?, is_guest = 0 WHERE id = ? AND is_guest = 1`),
   setReset: db.prepare(`UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?`),
   byReset: db.prepare(`SELECT * FROM users WHERE reset_token = ? AND reset_expires > datetime('now')`),
   setPassword: db.prepare(`UPDATE users SET password_hash = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?`)
@@ -92,7 +94,7 @@ export const Rooms = {
   close: db.prepare(`UPDATE rooms SET status = 'closed' WHERE id = ?`),
   setHost: db.prepare(`UPDATE rooms SET host_id = ? WHERE id = ?`),
   players: db.prepare(`
-    SELECT rp.seat, rp.ready, u.id AS user_id, u.username
+    SELECT rp.seat, rp.ready, u.id AS user_id, u.username, u.is_guest
     FROM room_players rp JOIN users u ON u.id = rp.user_id
     WHERE rp.room_id = ? ORDER BY rp.seat`),
   addPlayer: db.prepare(`INSERT INTO room_players (room_id, user_id, seat) VALUES (?, ?, ?)`),

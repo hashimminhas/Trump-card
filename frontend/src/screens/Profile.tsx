@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { api, Stats, User } from '../api';
+import { useAuth } from '../auth/AuthContext';
 
 const GLYPH: Record<string,string> = { S:'♠', H:'♥', D:'♦', C:'♣' };
 
 export default function Profile() {
+  const { isGuest } = useAuth();
   const { username } = useParams();
   const [data, setData] = useState<{ user: User; stats: Stats } | null>(null);
   const [err, setErr] = useState('');
@@ -14,6 +17,18 @@ export default function Profile() {
       .then(setData).catch(e => setErr(e.message));
   }, [username]);
 
+  if (isGuest && !username) {
+    return (
+      <div className="shell-main">
+        <h1>Profile</h1>
+        <div className="upgrade-banner">
+          <div><b>Guest statistics live inside the game.</b> Open <b>Play → Statistics</b> for your
+            local dashboard. A free account adds a permanent cloud profile across devices.</div>
+          <Link className="btn btn-upgrade btn-sm" to="/upgrade">Create account</Link>
+        </div>
+      </div>
+    );
+  }
   if (err) return <div className="shell-main"><h1>Profile</h1><div className="form-error">{err}</div></div>;
   if (!data) return <div className="shell-main"><div className="spin">loading…</div></div>;
   const { user, stats } = data;
