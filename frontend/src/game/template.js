@@ -1,4 +1,4 @@
-// Game DOM — extracted verbatim from the Phase 2 build
+﻿// Game DOM - extracted verbatim from the Phase 2 build
 export const TEMPLATE = `
 <div id="fx-layer"></div>
 
@@ -6,7 +6,7 @@ export const TEMPLATE = `
 <div class="screen show" id="screen-home">
   <div class="home-inner">
     <div class="logo">ELECTR<span class="o-core"></span>N<br>CARD</div>
-    <div class="tagline">Charge the pile. Hold the Senior seat. Sweep all 52 — or it's a draw.</div>
+    <div class="tagline">Charge the pile. Hold the Senior seat. Sweep all 52 - or it's a draw.</div>
     <div class="home-actions">
       <button class="btn btn-primary" onclick="startMatch()">New match</button>
       <button class="btn btn-ghost" onclick="showHistory()">Match history</button>
@@ -38,7 +38,7 @@ export const TEMPLATE = `
 <!-- ================= GAME ================= -->
 <div class="screen" id="screen-game">
   <div class="hud">
-    <span class="chip hud-trump"><span class="dim" style="font-size:10px;letter-spacing:.1em;">TRUMP</span> <span class="glyph" id="hud-trump-g">—</span></span>
+    <span class="chip hud-trump"><span class="dim" style="font-size:10px;letter-spacing:.1em;">TRUMP</span> <span class="glyph" id="hud-trump-g">-</span></span>
     <span class="chip mono" id="hud-round" style="font-size:12px;">R 0/13</span>
     <div class="round-track" id="round-track"></div>
     <div class="hud-spacer"></div>
@@ -74,9 +74,9 @@ export const TEMPLATE = `
     </div>
 
     <div class="pile-core" id="pile-core">
-      <div class="pc-trump"><span class="g" id="pc-trump-g">—</span><span id="pc-trump-n"></span></div>
-      <div class="pc-round" id="pc-round">Round — / 13</div>
-      <div class="pc-senior" id="pc-senior">Senior: —</div>
+      <div class="pc-trump"><span class="g" id="pc-trump-g">-</span><span id="pc-trump-n"></span></div>
+      <div class="pc-round" id="pc-round">Round - / 13</div>
+      <div class="pc-senior" id="pc-senior">Senior: -</div>
       <div class="pc-pile"><span class="count" id="pile-count">0</span><span class="plabel">PILE</span></div>
       <div class="sub" id="pile-sub">no collection yet</div>
       <div class="pc-status" id="pc-status"></div>
@@ -104,9 +104,9 @@ export const TEMPLATE = `
         <div style="font-size:14px;line-height:1.65;display:flex;flex-direction:column;gap:12px;">
           <p><b style="color:var(--charge)">1 · Tricks.</b> You and partner C face B and D. Thirteen rounds of four cards. Follow the lead suit if you can. Highest trump wins the round; if no trump is played, the highest card of the lead suit wins.</p>
           <p><b style="color:var(--charge)">2 · The Senior seat.</b> The Trump Chooser starts as Senior. Whoever wins a round takes the Senior seat and leads the next round.</p>
-          <p><b style="color:var(--charge)">3 · The pile.</b> Won cards aren't yours yet — every round's four cards charge the central pile. From Round 3, if the player who <i>started</i> the round as Senior also <i>wins</i> it, their team banks the entire pile. Rounds 1–2 can never collect.</p>
+          <p><b style="color:var(--charge)">3 · The pile.</b> Won cards aren't yours yet - every round's four cards charge the central pile. From Round 3, if the player who <i>started</i> the round as Senior also <i>wins</i> it, their team banks the entire pile. Rounds 1–2 can never collect.</p>
           <p><b style="color:var(--charge)">4 · Aces.</b> Win a round with an Ace and you can't lead an Ace next round (lifts when a non-Ace lead is played, and never applies from Round 11).</p>
-          <p><b style="color:var(--charge)">5 · KHOTI.</b> A team wins only by banking all 52 cards. Any other split — even 48 to 4 — is a draw. Cards stranded in the pile at the end belong to no one.</p>
+          <p><b style="color:var(--charge)">5 · KHOTI.</b> A team wins only by banking all 52 cards. Any other split - even 48 to 4 - is a draw. Cards stranded in the pile at the end belong to no one.</p>
         </div>
         <div style="text-align:center;margin-top:20px;"><button class="btn btn-primary" onclick="hideRules()">Got it</button></div>
       </div>
@@ -168,9 +168,9 @@ export const TEMPLATE = `
   <div class="rp-stage" id="rp-stage">
     <div class="rp-banner" id="rp-banner">Replay</div>
     <div class="pile-core" id="rp-core">
-      <div class="pc-trump"><span class="g" id="rp-trump-g">—</span><span id="rp-trump-n"></span></div>
-      <div class="pc-round" id="rp-round">Round — / 13</div>
-      <div class="pc-senior" id="rp-lead">Lead: —</div>
+      <div class="pc-trump"><span class="g" id="rp-trump-g">-</span><span id="rp-trump-n"></span></div>
+      <div class="pc-round" id="rp-round">Round - / 13</div>
+      <div class="pc-senior" id="rp-lead">Lead: -</div>
       <div class="pc-pile"><span class="count" id="rp-pile">0</span><span class="plabel">PILE</span></div>
     </div>
     <div class="rp-slot rp-A" id="rp-slot-A"><span class="who">A</span></div>

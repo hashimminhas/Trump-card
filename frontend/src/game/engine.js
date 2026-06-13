@@ -1,16 +1,16 @@
-import { TEMPLATE } from './template.js';
+﻿import { TEMPLATE } from './template.js';
 
 /**
  * Mounts the complete Electron Card game (Phase 2, untouched rules) into `root`.
- * opts.cloud  — optional { listRecords():Promise<rec[]>, saveMatch(rec):Promise, presence(status):void }
- * opts.onExit — optional callback; shows a "Back to account" button on the game hub
+ * opts.cloud  - optional { listRecords():Promise<rec[]>, saveMatch(rec):Promise, presence(status):void }
+ * opts.onExit - optional callback; shows a "Back to account" button on the game hub
  * Returns an unmount() cleanup function.
  */
 export function mountElectronGame(root, opts = {}) {
 const { cloud = null, onExit = null, historyCap = 0 } = opts;
 root.innerHTML = TEMPLATE;
 /* =====================================================
-   ELECTRON CARD — PHASE 2
+   ELECTRON CARD - PHASE 2
    Layers: rules · ai · audio · fx · flow · replay · stats · screens
    All Phase 1 rules preserved.
 ===================================================== */
@@ -147,7 +147,7 @@ function trickWinner(trick){let best=trick[0];for(let i=1;i<trick.length;i++)if(
 const strength=c=>(c.suit===G.trump?100:0)+c.rank;
 
 /* =====================================================
-   AI — three brains over shared card memory
+   AI - three brains over shared card memory
    Note: the leader of every round IS the potential collector
    (winner becomes Senior and Senior leads), so leading = defending.
 ===================================================== */
@@ -255,7 +255,7 @@ function botHard(seat,legal){
   if(winners.length){
     // breaking a live opponent collection is top priority; pay more when the stake is fat
     if(oppCollecting)return winners[0];
-    // otherwise take it minimally — but early on, don't burn bosses on a 4-card trick
+    // otherwise take it minimally - but early on, don't burn bosses on a 4-card trick
     if(stage==='early'&&isBoss(winners[0],seat)&&winners[0].rank>=13&&stake<=8&&!last)
       return dumpCard(seat,legal);
     return winners[0];
@@ -293,7 +293,7 @@ function hideRules(){$('rules-overlay').classList.remove('show');if($('rules-ove
 function renderHomeStats(){
   const h=store.get('ec.history.v1')||[];
   const k=h.filter(m=>m.result!=='DRAW').length;
-  $('home-stats').textContent=h.length?`${h.length} match${h.length>1?'es':''} played · KHOTI achieved: ${k}`:'No matches yet — the pile awaits.';
+  $('home-stats').textContent=h.length?`${h.length} match${h.length>1?'es':''} played · KHOTI achieved: ${k}`:'No matches yet - the pile awaits.';
 }
 let bannerT=null;
 function banner(html,ms=1600,cls=''){
@@ -310,7 +310,7 @@ function setThinking(seat,on){
 
 /* ---------- HUD ---------- */
 function renderHUD(){
-  $('hud-trump-g').innerHTML=G.trump?`<span style="color:${isRed(G.trump)?'var(--suit-red)':'#D9DCE6'}">${GLYPH[G.trump]}</span>`:'—';
+  $('hud-trump-g').innerHTML=G.trump?`<span style="color:${isRed(G.trump)?'var(--suit-red)':'#D9DCE6'}">${GLYPH[G.trump]}</span>`:'-';
   $('hud-round').textContent=`R ${G.round}/13`;
   const rt=$('round-track');rt.innerHTML='';
   for(let i=1;i<=13;i++){
@@ -336,9 +336,9 @@ function renderPile(){
     $('pc-trump-g').textContent=GLYPH[G.trump];
     $('pc-trump-g').style.color=isRed(G.trump)?'var(--suit-red)':'#D9DCE6';
     $('pc-trump-n').textContent=SUITNAME[G.trump];
-  }else{$('pc-trump-g').textContent='—';$('pc-trump-g').style.color='';$('pc-trump-n').textContent='';}
-  $('pc-round').textContent=G.round>0?`Round ${G.round} / 13`:'Round — / 13';
-  $('pc-senior').textContent='Senior: '+(G.senior?seatName(G.senior):'—');
+  }else{$('pc-trump-g').textContent='-';$('pc-trump-g').style.color='';$('pc-trump-n').textContent='';}
+  $('pc-round').textContent=G.round>0?`Round ${G.round} / 13`:'Round - / 13';
+  $('pc-senior').textContent='Senior: '+(G.senior?seatName(G.senior):'-');
   $('pile-count').textContent=G.pile.length;
   $('pile-sub').textContent=G.round<3?'collection from R3':'Senior collects on win';
   const n=G.pile.length;
@@ -465,7 +465,7 @@ async function runDeal(my){
   const bad=SEATS.find(s=>!G.hands[s].some(c=>c.suit===G.trump));
   if(bad){
     G.misdeals++;
-    banner(`<b style="color:var(--danger)">Misdeal</b> — ${bad==='A'?'you hold':bad+' holds'} no trumps. Reshuffling…<small>every player must hold at least one trump</small>`,2400);
+    banner(`<b style="color:var(--danger)">Misdeal</b> - ${bad==='A'?'you hold':bad+' holds'} no trumps. Reshuffling…<small>every player must hold at least one trump</small>`,2400);
     await sleep(2400);if(my!==token)return;
     G.trump=null;renderHUD();
     return runDeal(my);
@@ -595,7 +595,7 @@ async function resolveRound(my){
       const el=$('slot-'+p.seat).firstChild;
       if(el){el.classList.remove('win-glow','dimmed');el.classList.add('sink');}
     }
-    const reason=G.round<3?'no collection before Round 3':`Senior seat broken — ${win.seat} wasn't Senior at round start`;
+    const reason=G.round<3?'no collection before Round 3':`Senior seat broken - ${win.seat} wasn't Senior at round start`;
     banner(`<b>${win.seat==='A'?'You win':win.seat+' wins'} R${G.round}</b> (${why})<small>pile charges to ${G.pile.length} · ${reason}</small>`,2100);
   }
 
@@ -647,20 +647,20 @@ function insightText(rec){
   const a=analyze(rec);
   const P=[];
   if(rec.result==='DRAW'){
-    P.push(`No team swept all 52 cards, so the match ends in a draw — final banks ${rec.score.AC}–${rec.score.BD}.`);
+    P.push(`No team swept all 52 cards, so the match ends in a draw - final banks ${rec.score.AC}–${rec.score.BD}.`);
   }else{
     const t=rec.result==='KHOTI_AC'?'AC':'BD';
-    P.push(`Team ${t} achieved KHOTI — every collection of the match went their way, banking all 52 cards.`);
+    P.push(`Team ${t} achieved KHOTI - every collection of the match went their way, banking all 52 cards.`);
   }
   if(a.khotiDead)P.push(`The sweep died at Round ${a.khotiDead}: once both teams had banked cards, a draw was mathematically locked in.`);
   if(a.biggest)P.push(`Biggest haul: ${seatName(a.biggest.seat)} held the Senior seat through Round ${a.biggest.round} and banked a ${a.biggest.cards}-card pile for Team ${a.biggest.team}.`);
   if(a.slip&&a.slip.stake>=12){
     P.push(a.slip.sameTeam
-      ?`Biggest miss: at Round ${a.slip.round}, ${seatName(a.slip.lead)} was one trick from banking ${a.slip.stake}, but partner ${a.slip.winner} took the trick — same team, but the collection clock reset.`
+      ?`Biggest miss: at Round ${a.slip.round}, ${seatName(a.slip.lead)} was one trick from banking ${a.slip.stake}, but partner ${a.slip.winner} took the trick - same team, but the collection clock reset.`
       :`Biggest swing: at Round ${a.slip.round}, ${seatName(a.slip.lead)} was one trick from banking ${a.slip.stake} when ${seatName(a.slip.winner)} broke the Senior seat and stole the momentum.`);
   }
-  if(rec.score.stranded)P.push(`${rec.score.stranded} cards were stranded in the pile at the end — banked by no one.`);
-  if(!rec.collections.length)P.push(`Remarkably, no collection happened all match — the Senior seat changed hands every single round from Round 3 on.`);
+  if(rec.score.stranded)P.push(`${rec.score.stranded} cards were stranded in the pile at the end - banked by no one.`);
+  if(!rec.collections.length)P.push(`Remarkably, no collection happened all match - the Senior seat changed hands every single round from Round 3 on.`);
   return P;
 }
 
@@ -697,7 +697,7 @@ function endMatch(){
     Snd.play('win');setTimeout(khotiBurst,250);
   }
   $('sum-ac').textContent=ac;$('sum-bd').textContent=bd;
-  $('sum-stranded').textContent=stranded?`${stranded} cards stranded in the pile — banked by no one`:'No cards stranded — every card was banked';
+  $('sum-stranded').textContent=stranded?`${stranded} cards stranded in the pile - banked by no one`:'No cards stranded - every card was banked';
   const tl=$('sum-timeline');tl.innerHTML='';
   for(let i=1;i<=13;i++){
     const col=G.collections.find(c=>c.round===i);
@@ -720,12 +720,12 @@ function endMatch(){
 function showHistory(){
   const list=$('history-list');list.innerHTML='';
   const hist=store.get('ec.history.v1')||[];
-  if(!hist.length)list.innerHTML='<div class="empty-note">No matches yet. Play one — every game becomes a permanent record here.</div>';
+  if(!hist.length)list.innerHTML='<div class="empty-note">No matches yet. Play one - every game becomes a permanent record here.</div>';
   for(const m of hist){
     const b=document.createElement('button');
     b.className='match-card'+(m.result!=='DRAW'?' khoti-m':'');
     const d=new Date(m.date);
-    const res=m.result==='DRAW'?`Draw · ${m.score.AC}–${m.score.BD}`:`⚡ KHOTI — Team ${m.result==='KHOTI_AC'?'AC':'BD'}`;
+    const res=m.result==='DRAW'?`Draw · ${m.score.AC}–${m.score.BD}`:`⚡ KHOTI - Team ${m.result==='KHOTI_AC'?'AC':'BD'}`;
     const dots=Array.from({length:13},(_,i)=>{
       const c=m.collections.find(x=>x.round===i+1);
       return `<i class="${c?c.team.toLowerCase():''}"></i>`;
@@ -789,7 +789,7 @@ function showReport(m,backTo){
   $('btn-report-replay').onclick=()=>openReplay(m,'screen-report',backTo);
   const body=$('report-body');
   const d=new Date(m.date);
-  const res=m.result==='DRAW'?`Draw ${m.score.AC}–${m.score.BD}`:`KHOTI — Team ${m.result==='KHOTI_AC'?'AC':'BD'}`;
+  const res=m.result==='DRAW'?`Draw ${m.score.AC}–${m.score.BD}`:`KHOTI - Team ${m.result==='KHOTI_AC'?'AC':'BD'}`;
   const a=analyze(m);
   let rows='';
   for(const r of m.rounds){
@@ -823,7 +823,7 @@ function showReport(m,backTo){
       ${a.khotiDead?`<span class="chip dim">KHOTI died R${a.khotiDead}</span>`:''}
       ${m.misdeals?`<span class="chip dim">${m.misdeals} misdeal(s)</span>`:''}
     </div>
-    <div class="rsection"><h3>PILE PRESSURE — charge &amp; collections by round</h3>
+    <div class="rsection"><h3>PILE PRESSURE - charge &amp; collections by round</h3>
       <div class="pile-chart">${pileChartSVG(m)}</div></div>
     <div class="rsection"><h3>MATCH ANALYSIS</h3>
       <div class="insights" style="max-width:none;">${insightText(m).map(s=>`<p>${s}</p>`).join('')}</div></div>
@@ -841,16 +841,16 @@ function showReport(m,backTo){
 function showStats(){
   const hist=store.get('ec.history.v1')||[];
   const body=$('stats-body');
-  if(!hist.length){body.innerHTML='<div class="empty-note">No data yet — statistics appear after your first match.</div>';show('screen-stats');return;}
+  if(!hist.length){body.innerHTML='<div class="empty-note">No data yet - statistics appear after your first match.</div>';show('screen-stats');return;}
   const n=hist.length;
   const khoti=hist.filter(m=>m.result!=='DRAW').length;
   const myWins=hist.filter(m=>m.result==='KHOTI_AC').length;
   const allCols=hist.flatMap(m=>m.collections);
   const largest=allCols.length?Math.max(...allCols.map(c=>c.cards)):0;
-  const avgCol=allCols.length?(allCols.reduce((a,c)=>a+c.cards,0)/allCols.length).toFixed(1):'—';
+  const avgCol=allCols.length?(allCols.reduce((a,c)=>a+c.cards,0)/allCols.length).toFixed(1):'-';
   const longestPile=Math.max(0,...hist.flatMap(m=>m.rounds.map((r,i)=>(i===0?0:m.rounds[i-1].pileAfter)+4)));
   const durs=hist.map(m=>m.durationMs).filter(Boolean);
-  const avgDur=durs.length?fmtDur(durs.reduce((a,b)=>a+b,0)/durs.length):'—';
+  const avgDur=durs.length?fmtDur(durs.reduce((a,b)=>a+b,0)/durs.length):'-';
   // suit frequency
   const suitCt={S:0,H:0,D:0,C:0};hist.forEach(m=>suitCt[m.trump]++);
   const favSuit=SUITS.reduce((a,b)=>suitCt[b]>suitCt[a]?b:a);
@@ -888,7 +888,7 @@ function showStats(){
 }
 
 /* =====================================================
-   REPLAY — interprets stored records with the live visuals
+   REPLAY - interprets stored records with the live visuals
 ===================================================== */
 let R=null;
 function stopReplay(){if(R){R.tok++;R.playing=false;}}
@@ -988,7 +988,7 @@ async function rpPlay(){
   }
   if(R.ri>=m.rounds.length&&my===R.tok){
     R.playing=false;R.ri=m.rounds.length-1;
-    const res=m.result==='DRAW'?`Draw ${m.score.AC}–${m.score.BD}`:`KHOTI — Team ${m.result==='KHOTI_AC'?'AC':'BD'}`;
+    const res=m.result==='DRAW'?`Draw ${m.score.AC}–${m.score.BD}`:`KHOTI - Team ${m.result==='KHOTI_AC'?'AC':'BD'}`;
     $('rp-banner').innerHTML=`<b style="color:var(--charge)">Match end</b><small>${res}${m.score.stranded?' · '+m.score.stranded+' stranded':''}</small>`;
     rpUpdateUI();
   }

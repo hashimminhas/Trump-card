@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+﻿import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { toast } from '../components/ui';
@@ -14,14 +14,14 @@ export default function Upgrade() {
 
   if (!isGuest) {
     return <div className="shell-main"><h1>Account</h1>
-      <div className="muted-note">You already have a full account — nothing to upgrade.</div></div>;
+      <div className="muted-note">You already have a full account - nothing to upgrade.</div></div>;
   }
 
   async function submit(e: FormEvent) {
     e.preventDefault(); setErr(''); setBusy(true);
     try {
       await upgrade(username.trim(), email.trim(), pw);
-      toast('Account created — your match history came with you ⚡', 'gold');
+      toast('Account created - your match history came with you ⚡', 'gold');
       nav('/');
     } catch (e: any) { setErr(e.message); }
     finally { setBusy(false); }
@@ -47,7 +47,7 @@ export default function Upgrade() {
           {busy ? 'Upgrading…' : 'Create my account'}</button>
       </form>
       <div className="muted-note" style={{ marginTop: 12 }}>
-        Guests keep their last 10 matches on this device only — accounts keep everything, everywhere.
+        Guests keep their last 10 matches on this device only - accounts keep everything, everywhere.
       </div>
     </div>
   );

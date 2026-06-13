@@ -1,4 +1,4 @@
-/* Phase 3B migrations — idempotent; runs from db.js BEFORE statements are prepared. */
+﻿/* Phase 3B migrations - idempotent; runs from db.js BEFORE statements are prepared. */
 export function migrate(db) {
   const hasColumn = (table, col) =>
     db.prepare(`PRAGMA table_info(${table})`).all().some(c => c.name === col);

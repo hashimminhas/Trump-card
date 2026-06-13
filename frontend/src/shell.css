@@ -1,4 +1,4 @@
-/* Shell screens (login / profile / friends / rooms) — same design system as the table.
+﻿/* Shell screens (login / profile / friends / rooms) - same design system as the table.
    Game tokens & primitives (.btn, .chip, .toggle, .seg, …) come from game/game.css. */
 
 .shell {
@@ -151,7 +151,7 @@
 
 .mp-khoti { color: var(--charge); text-shadow: 0 0 30px rgba(242,179,61,.5); }
 
-/* ============ PHASE 3C — GUEST MODE ============ */
+/* ============ PHASE 3C - GUEST MODE ============ */
 .btn-guest {
   width: 100%; margin-top: 10px;
   display: flex; flex-direction: column; align-items: center; gap: 2px;

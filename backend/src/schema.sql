@@ -1,4 +1,4 @@
--- Electron Card — Phase 3A schema (SQLite)
+﻿-- Electron Card - Phase 3A schema (SQLite)
 
 CREATE TABLE IF NOT EXISTS users (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,

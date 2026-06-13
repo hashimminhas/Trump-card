@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { getSocket } from '../socket';
@@ -132,7 +132,7 @@ export default function Lobby() {
           navigator.clipboard?.writeText(room.code).then(() => toast('Room code copied'));
         }}>⧉ Copy code</button>
         <button className="btn btn-ghost btn-sm" onClick={() => {
-          navigator.clipboard?.writeText(`${location.origin}/room/${room.code}`).then(() => toast('Invite link copied — anyone can join, no account needed'));
+          navigator.clipboard?.writeText(`${location.origin}/room/${room.code}`).then(() => toast('Invite link copied - anyone can join, no account needed'));
         }}>🔗 Copy invite link</button>
       </div>
       <div className="muted-note" style={{ textAlign: 'center' }}>
@@ -173,7 +173,7 @@ export default function Lobby() {
               {room.locked ? '🔓 Unlock seats' : '🔒 Lock seats'}</button>
             <button className="btn btn-ghost btn-sm" onClick={() => act('/room/close').then(() => nav('/rooms'))}>Close room</button>
             <span style={{ flex: 1 }} />
-            {isGuest && <span className="presence-label">Share the invite link above — friend invites unlock with an account.</span>}
+            {isGuest && <span className="presence-label">Share the invite link above - friend invites unlock with an account.</span>}
             {friends.length > 0 && <>
               <span className="presence-label">Invite:</span>
               {friends.slice(0, 6).map(f =>

@@ -1,16 +1,16 @@
-# Electron Card — Phase 3C
+﻿# Electron Card - Phase 3C
 
 Fully synchronized online multiplayer. The server owns the deck, hands, turns, timers, and every
-rule check; clients only render. All Phase 1/2 game rules and features are preserved — the complete
+rule check; clients only render. All Phase 1/2 game rules and features are preserved - the complete
 single-player game still runs unmodified inside the React shell, and online matches save replays
 in the exact same format.
 
 See **MULTIPLAYER.md** for the architecture and the complete socket event reference.
 
-## What's new in 3C — Guest mode & room accessibility
+## What's new in 3C - Guest mode & room accessibility
 
 - **Play as Guest** on the sign-in screen: one click mints a lightweight server identity
-  (`Guest-48372`-style, no email, no password, flagged `is_guest`) and a silent JWT — so rooms,
+  (`Guest-48372`-style, no email, no password, flagged `is_guest`) and a silent JWT - so rooms,
   sockets, authoritative matches, anti-cheat, and reconnect all work for guests **unchanged**.
   The identity is stored locally (`ec.guest`) and resumes on return visits.
 - **Guest persistence is local**: single-player and online match records, replays, reports,
@@ -18,14 +18,14 @@ See **MULTIPLAYER.md** for the architecture and the complete socket event refere
   (oldest deleted first). The server never stores guest match history.
 - **Room link sharing**: the lobby shows *Copy code* and *Copy invite link*
   (`/room/ABX72Q`). Opening an invite link while signed out shows Login / Sign Up /
-  **Play as Guest**, and guests are seated instantly on arrival — no account wall.
+  **Play as Guest**, and guests are seated instantly on arrival - no account wall.
 - **Guest limitations** (enforced server-side with friendly upsell messages): no friends list,
   no friend invites, no cloud history, no cross-device sync, no account recovery.
-- **Account upgrade**: *Create account* converts the guest **in place** (same user id —
+- **Account upgrade**: *Create account* converts the guest **in place** (same user id -
   room membership survives), then the client imports its local history to the cloud:
   matches, statistics, and replays are preserved.
 - New endpoints: `POST /api/guest`, `POST /api/guest/upgrade {username,email,password}`.
-- New test: `backend/test-guest.js` — guest host + registered peer + two bots play a full
+- New test: `backend/test-guest.js` - guest host + registered peer + two bots play a full
   match; asserts guest room creation/joining, local-only guest history, cloud copy for the
   registered player, and the upgrade → import → stats flow.
 - Fixed a race where a human trump chooser's turn marker leaked into the play phase,
@@ -76,7 +76,7 @@ Set `EC_JWT_SECRET` in production. The database file is created automatically
   bell with unread badge, one-tap invite join.
 - **Password reset**: `POST /api/forgot` + `POST /api/reset` (dev returns the link; production
   plugs an email provider into `sendResetEmail`).
-- **Migrations**: `backend/src/migrate.js` runs automatically at boot — safe on 3A databases.
+- **Migrations**: `backend/src/migrate.js` runs automatically at boot - safe on 3A databases.
 - **Integration test**: `backend/test-multiplayer.js` plays a full match over real sockets and
   asserts anti-cheat, reconnect, and record persistence.
 
@@ -94,7 +94,7 @@ backend/
   src/sockets.js        authed Socket.io: presence map, room channels, friend notifications
   src/server.js         Express wiring + static SPA serving
 frontend/
-  src/game/             THE GAME — Phase 2 build, rules untouched
+  src/game/             THE GAME - Phase 2 build, rules untouched
     template.js           game DOM (verbatim)
     game.css              game styles (verbatim)
     engine.js             game logic wrapped as mountElectronGame(root, {cloud, onExit})
@@ -111,7 +111,7 @@ The game already routed all persistence through a storage wrapper, so Phase 3A i
 
 1. On opening **Play**, any pre-account localStorage history is bulk-imported once
    (`POST /api/matches/import`, idempotent on the record's own id).
-2. The server's full records (`GET /api/match-history/full`) seed the game's local cache —
+2. The server's full records (`GET /api/match-history/full`) seed the game's local cache -
    history, reports, statistics, and replays all work across devices.
 3. Every finished match is written locally **and** `POST /api/matches` (write-through).
    Hot columns (result, scores, trump, largest collection, duration) are extracted for
@@ -160,10 +160,10 @@ Client → server: `room:watch(code)` · `room:unwatch(code)` · `presence:set('
 Server → client: `user_connected` · `user_disconnected` · `presence` · `friends_changed` ·
 `room_state` · `room_joined` · `room_left` · `player_ready`
 
-The game emits `in_match` presence when a match starts and `online` when it ends —
+The game emits `in_match` presence when a match starts and `online` when it ends -
 friends see "in match" live.
 
 ## Next (Phase 3B follow-ups)
 
-Ranked mode, leaderboards, and tournaments — the spectator channel, deterministic records,
+Ranked mode, leaderboards, and tournaments - the spectator channel, deterministic records,
 and per-room match instances are the foundations they'll build on.

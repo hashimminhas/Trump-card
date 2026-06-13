@@ -1,9 +1,9 @@
-# Electron Card — Phase 3B: Multiplayer Architecture
+﻿# Electron Card - Phase 3B: Multiplayer Architecture
 
 ## Principle: the server is the game
 
 Phase 1/2 proved the rules client-side; Phase 3B moves authority to the server. The rules
-engine (`backend/src/gameEngine.js`) is a 1:1 port of the proven client engine — pure
+engine (`backend/src/gameEngine.js`) is a 1:1 port of the proven client engine - pure
 functions over a match state: legality (follow-suit, ace restriction), trick winner,
 Senior, collection, KHOTI, plus the Easy/Normal/Hard bot brains with shared card memory.
 
@@ -16,8 +16,8 @@ Senior, collection, KHOTI, plus the Easy/Normal/Hard bot brains with shared card
 - Clients send **intents** (`match:trump`, `match:play`); the server validates card
   ownership, turn ownership, follow-suit, trump rules, ace restriction, and phase before
   committing. Invalid intents return `match_error` and change nothing.
-- **Turn timer lives on the server** (60s, `EC_TURN_MS`). On expiry — or if the player is
-  disconnected — the server plays their lowest legal card. A match can never stall.
+- **Turn timer lives on the server** (60s, `EC_TURN_MS`). On expiry - or if the player is
+  disconnected - the server plays their lowest legal card. A match can never stall.
 - Bots fill any seat (`EC_BOT_MS` think time) using the same brains as single-player.
 - Misdeal validation (a player with zero trumps) automatically reshuffles and redeals.
 
@@ -37,7 +37,7 @@ Every mutation emits two things to the room channel:
 
 Sockets authenticate with the JWT. On any connection the server checks whether that user is
 seated in a live match; if so it rejoins them to the room channel, marks the seat connected,
-and pushes `match_started` + a full personalized snapshot — hand, turn, timers, everything.
+and pushes `match_started` + a full personalized snapshot - hand, turn, timers, everything.
 This survives refresh, tab close, network drops, and device switches. While absent, the
 seat is reserved and the turn timer auto-plays.
 
@@ -46,7 +46,7 @@ seat is reserved and the turn timer auto-plays.
 On finish the server builds a record **in the exact same format** as single-player matches
 (rounds → plays → winner/collection/totals, plus seat names, mode `online`, room code) and
 persists it to *every human participant's* account. That means the existing Phase 2 replay
-system reproduces online matches move-for-move with zero new code — open Play → Match
+system reproduces online matches move-for-move with zero new code - open Play → Match
 history on any device.
 
 ## Rooms & lobby
@@ -63,7 +63,7 @@ A persistent notification center (SQLite `notifications` table) stores friend re
 acceptances, and room invites; `notify` pushes them live. Presence (`online` / `in_match` /
 `offline`) is in-memory, broadcast to friends, and set automatically by match lifecycle.
 
-## Deferred 3A items — now done
+## Deferred 3A items - now done
 
 Forgot/reset password (timed single-use tokens; dev mode returns the link, production plugs
 an email provider into `sendResetEmail`), friend notifications, host controls, manual seats.
@@ -77,8 +77,8 @@ an email provider into `sendResetEmail`), friend notifications, host controls, m
 ## Guests (Phase 3C)
 
 Guests are first-class players at the table: a guest is a real (flagged) server identity with a
-silent JWT, so every guarantee on this page — personalized snapshots, validation, reconnect,
-timers — applies identically. The only difference is persistence: `match.js` skips cloud storage
+silent JWT, so every guarantee on this page - personalized snapshots, validation, reconnect,
+timers - applies identically. The only difference is persistence: `match.js` skips cloud storage
 for guest participants; their copy of the final record arrives via `match_finished` and the
 client stores it locally (capped at 10). Upgrading a guest keeps the same user id and imports
 the local history, so nothing is lost.

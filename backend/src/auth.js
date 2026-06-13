@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+﻿import jwt from 'jsonwebtoken';
 
 export const JWT_SECRET = process.env.EC_JWT_SECRET || 'dev-secret-change-me';
 const EXPIRES = '30d';
@@ -24,7 +24,7 @@ export function requireAuth(req, res, next) {
 /** Express middleware: blocks guest accounts from account-only features. */
 export function rejectGuests(req, res, next) {
   if (req.user?.isGuest) {
-    return res.status(403).json({ error: 'This feature needs an account. Create one free to unlock it — your match history comes with you.' });
+    return res.status(403).json({ error: 'This feature needs an account. Create one free to unlock it - your match history comes with you.' });
   }
   next();
 }

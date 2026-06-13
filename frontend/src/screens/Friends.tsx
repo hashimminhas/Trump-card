@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { getSocket } from '../socket';
@@ -55,7 +55,7 @@ export default function Friends() {
         <h1>Friends</h1>
         <div className="upgrade-banner">
           <div><b>Friends need an account.</b> Create one free to add friends, see who's online,
-            and send room invites — your guest match history comes with you.</div>
+            and send room invites - your guest match history comes with you.</div>
           <Link className="btn btn-upgrade btn-sm" to="/upgrade">Create account</Link>
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function Friends() {
       </>}
 
       <h2>Your friends</h2>
-      {friends.length === 0 && <div className="muted-note">No friends yet — search above to send a request.</div>}
+      {friends.length === 0 && <div className="muted-note">No friends yet - search above to send a request.</div>}
       {friends.map(f => (
         <div className="row-item" key={f.friendship_id}>
           {dot(f.status)}

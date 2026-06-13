@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
 import { getSocket } from '../socket';
-// @ts-ignore — the game is a self-contained JS module (Phase 2 build, rules untouched)
+// @ts-ignore - the game is a self-contained JS module (Phase 2 build, rules untouched)
 import { mountElectronGame } from '../game/engine.js';
 
 /** Cloud adapter the game uses for save/sync. */
@@ -16,7 +16,7 @@ function makeCloud() {
         if (Array.isArray(local) && local.length) {
           await api('/matches/import', { method: 'POST', json: { records: local } });
         }
-      } catch { /* local cache unreadable — fine */ }
+      } catch { /* local cache unreadable - fine */ }
       const d = await api<{ records: any[] }>('/match-history/full');
       return d.records;
     },

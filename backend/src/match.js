@@ -1,5 +1,5 @@
-/* =====================================================
-   Phase 3B — authoritative multiplayer match manager.
+﻿/* =====================================================
+   Phase 3B - authoritative multiplayer match manager.
 
    One Match instance per playing room. The server owns the
    deck, hands, turns, timers, and every rule check. Clients
@@ -210,7 +210,7 @@ export class Match {
       M.turnDeadline = Date.now() + TURN_MS;
       this.emit('turn_changed', { seat, deadline: M.turnDeadline });
       this.timers.turn = setTimeout(() => {
-        // timeout (or disconnected): auto-play lowest legal — match always continues
+        // timeout (or disconnected): auto-play lowest legal - match always continues
         const legal = legalMoves(M, seat);
         const low = [...legal].sort((a, b) =>
           ((a.suit === M.trump ? 100 : 0) + a.rank) - ((b.suit === M.trump ? 100 : 0) + b.rank))[0];
@@ -326,7 +326,7 @@ export class Match {
       mode: 'online', roomCode: this.code,
       seatNames: Object.fromEntries(SEATS.map(s => [s, this.seating[s].bot ? `BOT (${this.seating[s].bot})` : this.seating[s].username]))
     };
-    // persist for every human participant — replays reproduce the match exactly
+    // persist for every human participant - replays reproduce the match exactly
     const cols = record.collections;
     for (const s of SEATS) {
       const p = this.seating[s];
@@ -355,7 +355,7 @@ export class Match {
     if (on) this.connected.add(seat); else this.connected.delete(seat);
     this.emit('match_event', { type: on ? 'player_reconnected' : 'player_disconnected', seat });
     this.sync();
-    // NOTE: the match never blocks on a disconnect — the turn timer
+    // NOTE: the match never blocks on a disconnect - the turn timer
     // auto-plays for absent players, and the seat stays reserved.
   }
 

@@ -1,4 +1,4 @@
-/* Phase 3C integration test — guest multiplayer.
+﻿/* Phase 3C integration test - guest multiplayer.
    Guest host + registered peer + two bots play a full authoritative match.
    Asserts: guests can create/join/play rooms; both receive the final record
    over the socket; the record persists to the registered account's cloud
@@ -36,7 +36,7 @@ function autoPlayer(name, token, code) {
 
 async function main() {
   const t = Date.now();
-  // 1. brand-new visitor clicks "Play as Guest" — no email, no password
+  // 1. brand-new visitor clicks "Play as Guest" - no email, no password
   const g = await api('/guest', null, {});
   log(`== guest created: ${g.user.username} (is_guest=${g.user.is_guest})`);
 

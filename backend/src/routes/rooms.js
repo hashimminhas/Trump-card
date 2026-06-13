@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { tx, Rooms, Users } from '../db.js';
 import { requireAuth } from '../auth.js';
 import { roomBroadcast, notifyUser, pushNotification, getIO } from '../sockets.js';
@@ -64,7 +64,7 @@ r.post('/room/join', (req, res) => {
   const room = Rooms.byCode.get(code);
   if (!room || room.status === 'closed') return res.status(404).json({ error: 'No open room with that code.' });
   const already = Rooms.playerIn.get(room.id, req.user.id);
-  if (room.status === 'playing' && !already) return res.status(409).json({ error: 'Match in progress — join as spectator instead.' });
+  if (room.status === 'playing' && !already) return res.status(409).json({ error: 'Match in progress - join as spectator instead.' });
   if (!already) {
     const players = Rooms.players.all(room.id);
     const bots = botsOf(room);
@@ -110,7 +110,7 @@ r.post('/room/seat', (req, res) => {
   const players = Rooms.players.all(room.id);
   if (players.some(p => p.seat === seat && p.user_id !== req.user.id))
     return res.status(409).json({ error: 'Seat occupied.' });
-  if (botsOf(room)[seat]) return res.status(409).json({ error: 'A bot holds that seat — host can remove it.' });
+  if (botsOf(room)[seat]) return res.status(409).json({ error: 'A bot holds that seat - host can remove it.' });
   Rooms.setSeat.run(seat, room.id, req.user.id);
   const fresh = Rooms.byCode.get(room.code);
   sync(fresh);
@@ -185,7 +185,7 @@ r.post('/room/bot/remove', (req, res) => {
 
 /* ---------- friend invites ---------- */
 r.post('/room/invite', (req, res) => {
-  if (req.user.isGuest) return res.status(403).json({ error: 'Friend invites need an account — share the room code or link instead.' });
+  if (req.user.isGuest) return res.status(403).json({ error: 'Friend invites need an account - share the room code or link instead.' });
   const room = Rooms.anyRoomOf.get(req.user.id);
   if (!room || room.status !== 'open') return res.status(404).json({ error: 'You are not in an open room.' });
   const target = Users.byUsername.get(String(req.body?.username || ''));
@@ -205,7 +205,7 @@ r.post('/room/start', (req, res) => {
     const p = players.find(x => x.seat === s);
     if (p) seating[s] = { userId: p.user_id, username: p.username, isGuest: !!p.is_guest };
     else if (bots[s]) seating[s] = { bot: bots[s] };
-    else return res.status(409).json({ error: `Seat ${s} is empty — fill it with a player or a bot.` });
+    else return res.status(409).json({ error: `Seat ${s} is empty - fill it with a player or a bot.` });
   }
   const notReady = players.filter(p => p.user_id !== room.host_id && !p.ready);
   if (notReady.length) return res.status(409).json({ error: 'All players must be ready.' });

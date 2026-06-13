@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { Users } from '../db.js';
@@ -56,7 +56,7 @@ r.post('/guest', (req, res) => {
   res.json({ token: signToken(user), user });
 });
 
-/* Convert a guest into a real account — same user id, so any room
+/* Convert a guest into a real account - same user id, so any room
    membership survives. The client then imports its local history. */
 r.post('/guest/upgrade', requireAuth, (req, res) => {
   if (!req.user.isGuest) return res.status(400).json({ error: 'This account is not a guest.' });
@@ -85,7 +85,7 @@ function sendResetEmail(user, link) {
 
 r.post('/forgot', (req, res) => {
   const u = Users.byEmail.get(String(req.body?.email || ''));
-  // Always answer 200 — never reveal whether an email exists.
+  // Always answer 200 - never reveal whether an email exists.
   if (u) {
     const token = crypto.randomBytes(24).toString('hex');
     const expires = new Date(Date.now() + 30 * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19);

@@ -1,4 +1,4 @@
-/* Phase 3B integration test — run with the server on :3001.
+﻿/* Phase 3B integration test - run with the server on :3001.
    Proves: room flow, match start, server-authoritative play, anti-cheat
    rejection, disconnect/reconnect with state restore, match completion,
    record persistence for both humans. */
@@ -121,7 +121,7 @@ async function main() {
   assert(sum === 52, 'all 52 cards accounted for');
   assert(host.cheatRejected, 'cheat attempts rejected by server');
   assert(reconnected, 'disconnect/reconnect exercised');
-  // observe auto-plays from the HOST socket — the peer is offline while they happen
+  // observe auto-plays from the HOST socket - the peer is offline while they happen
   assert(host.autoPlays >= 1, `server auto-played for absent player (host observed ${host.autoPlays}x)`);
   assert(rec.rounds.every(r => r.plays.length === 4), 'every round has exactly 4 plays');
   const h1 = await api('/match-history', u1.token);

@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+﻿import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, Room } from '../api';
 
@@ -22,7 +22,7 @@ export default function Rooms() {
     <div className="shell-main">
       <h1>Private rooms</h1>
       <div className="muted-note" style={{marginBottom:20}}>
-        Gather four players with a 6-character code. Teams are A+C vs B+D — the host sits at A.
+        Gather four players with a 6-character code. Teams are A+C vs B+D - the host sits at A.
         Real-time gameplay arrives in Phase 3B; for now the lobby tracks seats and ready status.
       </div>
       <div className="nav-grid">

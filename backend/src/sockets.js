@@ -1,4 +1,4 @@
-import { Server } from 'socket.io';
+﻿import { Server } from 'socket.io';
 import { verifyToken } from './auth.js';
 import { Friends, Notifs } from './db.js';
 import { matchFor, matchOfUser } from './match.js';
@@ -15,7 +15,7 @@ import { matchFor, matchOfUser } from './match.js';
  *   match:trump  ({code,suit}, ack)   choose trump (validated server-side)
  *   match:play   ({code,card}, ack)   play a card  (validated server-side)
  *   match:state  ({code})       request a fresh personalized snapshot (reconnect/resync)
- *   ping:rtt     (ts, ack)      latency probe — ack immediately
+ *   ping:rtt     (ts, ack)      latency probe - ack immediately
  *
  * Server -> client:
  *   user_connected / user_disconnected / presence    (friends)

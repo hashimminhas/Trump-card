@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSocket } from '../socket';
 import { useAuth } from '../auth/AuthContext';
@@ -68,8 +68,8 @@ export default function OnlineMatch({ code, spectator, onExit }: {
     const onEvent = (e: any) => {
       if (e.type === 'dealing') flash(<><b>{e.dealer}</b> deals · <span className="accent">{e.chooser}</span> chooses trump{e.misdeals ? ` (redeal ${e.misdeals})` : ''}</>);
       if (e.type === 'trump_chosen') flash(<>Trump is <span className="accent" style={{ fontSize: 17 }}>{GLYPH[e.suit]} {SUITNAME[e.suit]}</span>{e.auto ? <small> auto-chosen on timeout</small> : null}</>);
-      if (e.type === 'misdeal') flash(<><b style={{ color: 'var(--danger)' }}>Misdeal</b> — seat {e.seat} holds no trumps. Reshuffling…</>);
-      if (e.type === 'player_disconnected') toast(`${e.seat} disconnected — seat reserved, the match continues`, 'error');
+      if (e.type === 'misdeal') flash(<><b style={{ color: 'var(--danger)' }}>Misdeal</b> - seat {e.seat} holds no trumps. Reshuffling…</>);
+      if (e.type === 'player_disconnected') toast(`${e.seat} disconnected - seat reserved, the match continues`, 'error');
       if (e.type === 'player_reconnected') toast(`${e.seat} reconnected`);
       if (e.type === 'aborted') { toast('Match aborted: ' + e.reason, 'error'); onExit(); }
     };
@@ -83,7 +83,7 @@ export default function OnlineMatch({ code, spectator, onExit }: {
     };
     const onFinish = ({ record }: any) => {
       setFinished(record);
-      // Guests have no cloud history — keep the record locally so replays,
+      // Guests have no cloud history - keep the record locally so replays,
       // reports, and statistics work (most recent 10 matches).
       if (isGuest && !spectator) {
         try {
@@ -172,7 +172,7 @@ export default function OnlineMatch({ code, spectator, onExit }: {
       <div className="hud">
         <span className="chip hud-trump"><span className="dim" style={{ fontSize: 10, letterSpacing: '.1em' }}>TRUMP </span>
           <span className="glyph" style={{ color: st.trump ? (isRed(st.trump) ? 'var(--suit-red)' : '#D9DCE6') : undefined }}>
-            {st.trump ? GLYPH[st.trump] : '—'}</span></span>
+            {st.trump ? GLYPH[st.trump] : '-'}</span></span>
         <span className="chip mono" style={{ fontSize: 12 }}>R {st.round}/13</span>
         <span className="chip mono" style={{ fontSize: 11 }}>{code}</span>
         {spectator && <span className="chip" style={{ color: 'var(--charge)' }}>👁 SPECTATING</span>}
@@ -196,11 +196,11 @@ export default function OnlineMatch({ code, spectator, onExit }: {
           style={{ boxShadow: st.pile ? `0 0 ${10 + st.pile * 2.2}px rgba(242,179,61,${Math.min(.12 + st.pile * .022, .65)})` : 'none' }}>
           <div className="pc-trump">
             <span className="g" style={{ color: st.trump ? (isRed(st.trump) ? 'var(--suit-red)' : '#D9DCE6') : undefined }}>
-              {st.trump ? GLYPH[st.trump] : '—'}</span>
+              {st.trump ? GLYPH[st.trump] : '-'}</span>
             <span>{st.trump ? SUITNAME[st.trump] : ''}</span>
           </div>
-          <div className="pc-round">{st.round > 0 ? `Round ${st.round} / 13` : 'Round — / 13'}</div>
-          <div className="pc-senior">Senior: {st.senior ? (st.senior === st.mySeat ? 'You' : st.senior) : '—'}</div>
+          <div className="pc-round">{st.round > 0 ? `Round ${st.round} / 13` : 'Round - / 13'}</div>
+          <div className="pc-senior">Senior: {st.senior ? (st.senior === st.mySeat ? 'You' : st.senior) : '-'}</div>
           <div className="pc-pile"><span className="count">{st.pile}</span><span className="plabel">PILE</span></div>
           <div className="pc-status">
             {st.phase === 'trump' ? `${st.chooser === st.mySeat ? 'You choose' : st.chooser + ' chooses'} trump…`
@@ -268,12 +268,12 @@ export default function OnlineMatch({ code, spectator, onExit }: {
           <div className="overlay show">
             <div className="panel">
               <h2 className={finished.result !== 'DRAW' ? 'mp-khoti' : ''}>
-                {finished.result === 'DRAW' ? 'DRAW' : `KHOTI — TEAM ${finished.result === 'KHOTI_AC' ? 'AC' : 'BD'}`}
+                {finished.result === 'DRAW' ? 'DRAW' : `KHOTI - TEAM ${finished.result === 'KHOTI_AC' ? 'AC' : 'BD'}`}
               </h2>
               <div className="sub">AC {finished.score.AC} – {finished.score.BD} BD
                 {finished.score.stranded ? ` · ${finished.score.stranded} stranded` : ''}</div>
               <div className="muted-note" style={{ marginBottom: 18 }}>
-                {st.mySeat ? <>Saved to your match history — watch the full replay from <b>Play → Match history</b>.</>
+                {st.mySeat ? <>Saved to your match history - watch the full replay from <b>Play → Match history</b>.</>
                   : 'Spectated match complete.'}
               </div>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
