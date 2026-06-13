@@ -1,11 +1,11 @@
-﻿# Electron Card - Phase 3B: Multiplayer Architecture
+﻿# Electron Card - Multiplayer Architecture
 
 ## Principle: the server is the game
 
-Phase 1/2 proved the rules client-side; Phase 3B moves authority to the server. The rules
-engine (`backend/src/gameEngine.js`) is a 1:1 port of the proven client engine - pure
-functions over a match state: legality (follow-suit, ace restriction), trick winner,
-Senior, collection, KHOTI, plus the Easy/Normal/Hard bot brains with shared card memory.
+The server owns all game authority. The rules engine (`backend/src/gameEngine.js`) is a
+1:1 port of the client engine - pure functions over a match state: legality (follow-suit,
+ace restriction), trick winner, Senior, collection, KHOTI, plus the Easy/Normal/Hard bot
+brains with shared card memory.
 
 `backend/src/match.js` owns one `Match` instance per playing room:
 
@@ -62,11 +62,6 @@ every non-host human ready.
 A persistent notification center (SQLite `notifications` table) stores friend requests,
 acceptances, and room invites; `notify` pushes them live. Presence (`online` / `in_match` /
 `offline`) is in-memory, broadcast to friends, and set automatically by match lifecycle.
-
-## Deferred 3A items - now done
-
-Forgot/reset password (timed single-use tokens; dev mode returns the link, production plugs
-an email provider into `sendResetEmail`), friend notifications, host controls, manual seats.
 
 ## Tuning knobs (env)
 

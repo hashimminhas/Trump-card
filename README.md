@@ -1,169 +1,166 @@
-﻿# Electron Card - Phase 3C
+# Electron Card
 
-Fully synchronized online multiplayer. The server owns the deck, hands, turns, timers, and every
-rule check; clients only render. All Phase 1/2 game rules and features are preserved - the complete
-single-player game still runs unmodified inside the React shell, and online matches save replays
-in the exact same format.
+> Charge the pile. Hold the Senior seat. Sweep all 52 - or it's a draw.
 
-See **MULTIPLAYER.md** for the architecture and the complete socket event reference.
+A custom strategic 4-player card game with full online multiplayer, bots, replays, and statistics. Built with React + Node.js.
 
-## What's new in 3C - Guest mode & room accessibility
+---
 
-- **Play as Guest** on the sign-in screen: one click mints a lightweight server identity
-  (`Guest-48372`-style, no email, no password, flagged `is_guest`) and a silent JWT - so rooms,
-  sockets, authoritative matches, anti-cheat, and reconnect all work for guests **unchanged**.
-  The identity is stored locally (`ec.guest`) and resumes on return visits.
-- **Guest persistence is local**: single-player and online match records, replays, reports,
-  statistics, and settings live in the browser, capped at the **10 most recent matches**
-  (oldest deleted first). The server never stores guest match history.
-- **Room link sharing**: the lobby shows *Copy code* and *Copy invite link*
-  (`/room/ABX72Q`). Opening an invite link while signed out shows Login / Sign Up /
-  **Play as Guest**, and guests are seated instantly on arrival - no account wall.
-- **Guest limitations** (enforced server-side with friendly upsell messages): no friends list,
-  no friend invites, no cloud history, no cross-device sync, no account recovery.
-- **Account upgrade**: *Create account* converts the guest **in place** (same user id -
-  room membership survives), then the client imports its local history to the cloud:
-  matches, statistics, and replays are preserved.
-- New endpoints: `POST /api/guest`, `POST /api/guest/upgrade {username,email,password}`.
-- New test: `backend/test-guest.js` - guest host + registered peer + two bots play a full
-  match; asserts guest room creation/joining, local-only guest history, cloud copy for the
-  registered player, and the upgrade → import → stats flow.
-- Fixed a race where a human trump chooser's turn marker leaked into the play phase,
-  allowing a round-0 trick that could stall the match (also the cause of a rare 3B test flake).
+## What is Electron Card?
 
-## Stack
+Electron Card is a trick-taking card game for exactly four players split into two teams. It is not a point game - there are no scores to chase round by round. The only way to win is to bank every single card in the deck. Anything less is a draw.
+
+The tension comes from a shared central pile. Every round's four cards charge the pile, but a team can only claim it by holding the Senior seat at exactly the right moment. Lose the Senior seat and the pile resets the clock on collection.
+
+---
+
+## Teams
+
+| Team | Seats | Position |
+|------|-------|----------|
+| AC | A (you) + C (partner) | opposite sides of the table |
+| BD | B + D (opponents) | opposite sides of the table |
+
+Partners sit across from each other. You and C are always on the same team.
+
+---
+
+## Before the Match Starts
+
+One player is chosen as the Trump Chooser. They see their first five cards and pick the trump suit for the entire match. The Trump Chooser starts as the **Senior**.
+
+Every player must hold at least one trump card. If any player holds zero trumps after the deal, it is a **misdeal** - the deck is reshuffled and re-dealt automatically.
+
+---
+
+## How Rounds Work
+
+Thirteen rounds are played. Each round:
+
+1. The Senior leads by playing any card face-up.
+2. Every other player follows in turn order.
+3. **You must follow the lead suit if you have it.** You may only play a different suit if you have no cards of the lead suit.
+4. The round winner is determined:
+   - If any trump cards were played, the highest trump wins.
+   - If no trump was played, the highest card of the lead suit wins.
+5. The round winner becomes the new **Senior** and leads the next round.
+
+---
+
+## The Senior Seat
+
+The Senior seat is the most important position in the game. It determines:
+
+- Who leads the next round.
+- Whether a collection can happen.
+
+Winning a round always passes the Senior seat to you. Losing a round means giving it up.
+
+---
+
+## The Pile and Collections
+
+Every four cards played in a round go into the central pile - nobody owns them yet.
+
+**From Round 3 onward**, a collection can happen:
+
+> If the player who **started** the round as Senior also **wins** that round, their team banks the entire pile.
+
+When a team banks the pile, those cards are theirs permanently and the pile resets to zero.
+
+**Rounds 1 and 2 can never trigger a collection**, no matter what happens.
+
+---
+
+## The Ace Restriction
+
+If you win a round by playing an **Ace**, you cannot lead an Ace on the very next round.
+
+The restriction lifts as soon as any non-Ace card is led in that following round (by you or anyone).
+
+The Ace restriction never applies from **Round 11 onward**.
+
+---
+
+## KHOTI - The Only Way to Win
+
+A team wins by achieving **KHOTI**: banking all 52 cards.
+
+There is no partial victory. If both teams have banked at least one card, or if any cards are stranded in the pile when the match ends, the result is a **draw**.
+
+This means:
+- A 48-4 card split is a draw.
+- A 52-0 sweep is KHOTI.
+- Cards left in the pile at the end belong to no one - they count against both teams.
+
+---
+
+## Quick Example
+
+| Round | Senior at Start | Round Winner | Collection? |
+|-------|----------------|--------------|-------------|
+| 1 | A | B | No (Rounds 1-2 never collect) |
+| 2 | B | B | No (Rounds 1-2 never collect) |
+| 3 | B | B | Yes - BD banks the pile |
+| 4 | B | C | No - Senior (B) didn't win |
+| 5 | C | C | Yes - AC banks the pile |
+
+---
+
+## Features
+
+- **Single-player** with Easy / Normal / Hard bots and a 60-second turn timer
+- **Online multiplayer** with room codes, friend invites, and spectator mode
+- **Reconnect** - drop mid-match and your seat is held; rejoin with your full hand restored
+- **Guest mode** - play instantly with no account; upgrade later and keep your history
+- **Match replays** - every match (solo and online) is recorded and replayable move-for-move
+- **Statistics** - win rates, average collection size, favorite trump suit, match duration
+- **Accessibility** - color-blind deck (diamonds blue, clubs green), reduced motion, larger text
+- **Keyboard support** - left/right to select a card, Enter to play
+
+---
+
+## Running Locally
+
+Requires **Node 22+**.
+
+```bash
+# Install
+cd backend   && npm install
+cd ../frontend && npm install
+
+# Development (two terminals)
+cd backend   && npm run dev    # API + sockets on :3001
+cd frontend  && npm run dev    # Vite on :5173, proxies /api and /socket.io
+
+# Production (single process)
+cd frontend  && npm run build
+cd ../backend && npm start     # serves the built SPA + API on :3001
+```
+
+Set `EC_JWT_SECRET` in production. The database is created automatically at `backend/electron-card.db` (override with `EC_DB`).
+
+---
+
+## Tech Stack
 
 | Layer | Choice |
-|---|---|
+|-------|--------|
 | Frontend | React 18 + TypeScript + Vite |
 | Backend | Node.js + Express |
 | Database | SQLite via Node's built-in `node:sqlite` (zero native deps) |
-| Auth | JWT (30-day tokens) + bcryptjs password hashing |
+| Auth | JWT (30-day tokens) + bcryptjs |
 | Realtime | Socket.io (presence + room channels) |
 
-## Running it
+---
 
-Requires **Node 22+** (for the built-in SQLite module).
+## Documentation
 
-```bash
-# 1. install
-cd backend  && npm install
-cd ../frontend && npm install
+- [MULTIPLAYER.md](MULTIPLAYER.md) - Multiplayer architecture, socket events, reconnect, guest mode
+- [BACKEND.md](BACKEND.md) - Full API reference, database schema, environment variables, project layout
 
-# 2. development (two terminals)
-cd backend  && npm run dev      # API + sockets on :3001
-cd frontend && npm run dev      # Vite on :5173, proxies /api and /socket.io
+---
 
-# 3. production (single process)
-cd frontend && npm run build
-cd ../backend && npm start      # serves the built SPA + API on :3001
-```
+## Roadmap
 
-Set `EC_JWT_SECRET` in production. The database file is created automatically
-(`backend/electron-card.db`; override with `EC_DB`).
-
-## What's new in 3B
-
-- **Authoritative multiplayer**: `backend/src/gameEngine.js` (rules + bots ported 1:1) and
-  `backend/src/match.js` (per-room Match: one server shuffle, personalized snapshots, server-side
-  60s turn timer with auto-play, misdeal redeal, anti-cheat validation of ownership / turn /
-  follow-suit / ace restriction).
-- **Reconnect**: refresh or drop mid-match → seat reserved, auto-rejoin with full hand/turn restore.
-- **Lobby 2.0**: manual seat selection, host controls (lock seats, kick, transfer host, close room,
-  add/remove bots with difficulty), friend invites, ping indicator, spectate.
-- **Spectator mode**: watch live matches; spectators never receive hands.
-- **Notification center**: persistent friend requests / acceptances / room invites + live push,
-  bell with unread badge, one-tap invite join.
-- **Password reset**: `POST /api/forgot` + `POST /api/reset` (dev returns the link; production
-  plugs an email provider into `sendResetEmail`).
-- **Migrations**: `backend/src/migrate.js` runs automatically at boot - safe on 3A databases.
-- **Integration test**: `backend/test-multiplayer.js` plays a full match over real sockets and
-  asserts anti-cheat, reconnect, and record persistence.
-
-## Layout
-
-```
-backend/
-  src/schema.sql        users, matches, friendships, rooms, room_players
-  src/db.js             node:sqlite + prepared statements + tx()
-  src/auth.js           JWT sign/verify + requireAuth middleware
-  src/routes/auth.js    POST /register /login · GET /me
-  src/routes/profile.js GET /profile[/​:username] · match history · cloud save · import · user search
-  src/routes/friends.js GET /friends · request / accept / remove
-  src/routes/rooms.js   create / join / leave / ready · GET /room/:code
-  src/sockets.js        authed Socket.io: presence map, room channels, friend notifications
-  src/server.js         Express wiring + static SPA serving
-frontend/
-  src/game/             THE GAME - Phase 2 build, rules untouched
-    template.js           game DOM (verbatim)
-    game.css              game styles (verbatim)
-    engine.js             game logic wrapped as mountElectronGame(root, {cloud, onExit})
-  src/screens/          Login · Register · Hub · Profile · Friends · Rooms · Lobby · Play
-  src/auth/             AuthContext (login/register/logout, session restore)
-  src/api.ts            fetch wrapper with JWT
-  src/socket.ts         Socket.io client singleton
-```
-
-## How cloud save works
-
-The game already routed all persistence through a storage wrapper, so Phase 3A injects a
-**cloud adapter** instead of rewriting anything:
-
-1. On opening **Play**, any pre-account localStorage history is bulk-imported once
-   (`POST /api/matches/import`, idempotent on the record's own id).
-2. The server's full records (`GET /api/match-history/full`) seed the game's local cache -
-   history, reports, statistics, and replays all work across devices.
-3. Every finished match is written locally **and** `POST /api/matches` (write-through).
-   Hot columns (result, scores, trump, largest collection, duration) are extracted for
-   SQL-side statistics; the full JSON record powers replays.
-
-## API
-
-```
-POST /api/register            {username, email, password} → {token, user}
-POST /api/login               {login, password}           → {token, user}
-GET  /api/me
-GET  /api/profile             → {user, stats}
-GET  /api/profile/:username
-GET  /api/users/search?q=
-GET  /api/match-history       (light rows)
-GET  /api/match-history/full  (full records for the game)
-POST /api/matches             (save one record)
-POST /api/matches/import      {records:[…]}
-GET  /api/friends             → {friends(+presence), incoming, outgoing}
-POST /api/friends/request     {username}
-POST /api/friends/accept      {id}
-DELETE /api/friends/:id
-POST /api/room/create         → {room}  (6-char code, host seated at A)
-POST /api/room/join           {code}    (seats fill A→C→B→D: partner first)
-GET  /api/room/:code
-POST /api/room/leave
-POST /api/room/ready          {ready}
-POST /api/room/seat           {seat}            manual seat selection
-POST /api/room/lock           {locked}          host: lock/unlock seats
-POST /api/room/kick           {userId}          host
-POST /api/room/transfer       {userId}          host: transfer host
-POST /api/room/close                            host
-POST /api/room/bot/add        {seat,difficulty} host (easy|normal|hard)
-POST /api/room/bot/remove     {seat}            host
-POST /api/room/invite         {username}        invite a friend (notification)
-POST /api/room/start                            host: begin the authoritative match
-POST /api/forgot              {email}
-POST /api/reset               {token, password}
-GET  /api/notifications       → {notifications, unread}
-POST /api/notifications/read  {id?}             one or all
-```
-
-## Socket events
-
-Client → server: `room:watch(code)` · `room:unwatch(code)` · `presence:set('online'|'in_match')`
-Server → client: `user_connected` · `user_disconnected` · `presence` · `friends_changed` ·
-`room_state` · `room_joined` · `room_left` · `player_ready`
-
-The game emits `in_match` presence when a match starts and `online` when it ends -
-friends see "in match" live.
-
-## Next (Phase 3B follow-ups)
-
-Ranked mode, leaderboards, and tournaments - the spectator channel, deterministic records,
-and per-room match instances are the foundations they'll build on.
+Ranked mode, leaderboards, and tournaments. The spectator channel, deterministic match records, and per-room match instances are the foundations they will build on.
