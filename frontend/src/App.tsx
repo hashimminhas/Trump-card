@@ -8,6 +8,7 @@ import Friends from './screens/Friends';
 import Rooms from './screens/Rooms';
 import Lobby from './screens/Lobby';
 import Play from './screens/Play';
+import PairLock from './screens/PairLock';
 import Upgrade from './screens/Upgrade';
 import Forgot from './screens/Forgot';
 import Reset from './screens/Reset';
@@ -31,6 +32,7 @@ function Shell({ children }: { children: JSX.Element }) {
         <nav className="shell-nav">
           <NavLink to="/" end>Home</NavLink>
           <NavLink to="/play">Play</NavLink>
+          <NavLink to="/pair-lock-beta">Pair Lock beta</NavLink>
           {!isGuest && <NavLink to="/profile">Profile</NavLink>}
           {!isGuest && <NavLink to="/friends">Friends</NavLink>}
           <NavLink to="/rooms">Rooms</NavLink>
@@ -56,6 +58,7 @@ export default function App() {
         <Route path="/forgot" element={<Forgot />} />
         <Route path="/reset/:token" element={<Reset />} />
         <Route path="/play" element={<RequireAuth><Play /></RequireAuth>} />
+        <Route path="/pair-lock-beta" element={<RequireAuth><Shell><PairLock /></Shell></RequireAuth>} />
         <Route path="/" element={<RequireAuth><Shell><Hub /></Shell></RequireAuth>} />
         <Route path="/upgrade" element={<RequireAuth><Shell><Upgrade /></Shell></RequireAuth>} />
         <Route path="/profile" element={<RequireAuth><Shell><Profile /></Shell></RequireAuth>} />

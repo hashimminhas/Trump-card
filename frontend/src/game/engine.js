@@ -117,7 +117,7 @@ function freshState(){
     trump:null,hands:{A:[],B:[],C:[],D:[]},
     round:0,senior:null,seniorAtStart:null,
     leadSeat:null,leadSuit:null,trick:[],
-    pile:[],banks:{AC:[],BD:[]},
+    pile:[],banks:{AC:[],BD:[]},lastCollectRound:-10,
     aceLock:null,rounds:[],collections:[],misdeals:0,over:false,
     t0:Date.now(),
     mem:freshMemory()
@@ -574,7 +574,8 @@ async function resolveRound(my){
   G.trick.forEach(p=>G.pile.push(p.card));
 
   let collected=false;
-  if(G.round>=3&&win.seat===G.seniorAtStart){
+  const onCooldown=(G.round===G.lastCollectRound+1);
+  if(G.round>=3 && win.seat===G.seniorAtStart && (!onCooldown||G.round===13)){
     collected=true;
     const team=TEAM(win.seat);
     const n=G.pile.length;
@@ -589,7 +590,7 @@ async function resolveRound(my){
     Snd.play('collect');
     burstAt($('pile-core'),[team==='AC'?'#E0A93E':'#4FB6C9','#FFD37A'],28,150);
     banner(`<span class="accent" style="font-size:17px;">⚡ ${win.seat==='A'?'YOU COLLECT':win.seat+' COLLECTS'} ${n}</span><small>Team ${team} banks the entire pile</small>`,2300,'collect');
-    G.pile=[];
+    G.pile=[];G.lastCollectRound=G.round;
   }else{
     for(const p of G.trick){
       const el=$('slot-'+p.seat).firstChild;

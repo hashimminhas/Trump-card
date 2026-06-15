@@ -168,12 +168,23 @@ export default function OnlineMatch({ code, spectator, onExit }: {
   };
 
   return (
-    <div className="screen show" id="screen-game">
+    <div className="screen show" id="screen-game" style={{ top: 56 }}>
       <div className="hud">
         <span className="chip hud-trump"><span className="dim" style={{ fontSize: 10, letterSpacing: '.1em' }}>TRUMP </span>
           <span className="glyph" style={{ color: st.trump ? (isRed(st.trump) ? 'var(--suit-red)' : '#D9DCE6') : undefined }}>
             {st.trump ? GLYPH[st.trump] : '-'}</span></span>
         <span className="chip mono" style={{ fontSize: 12 }}>R {st.round}/13</span>
+        <div className="round-track">
+          {Array.from({ length: 13 }, (_, i) => {
+            const r = i + 1;
+            const col = st.collections.find(c => c.round === r);
+            let cls = 'seg-r';
+            if (col) cls += col.team === 'AC' ? ' col-ac' : ' col-bd';
+            else if (r < st.round) cls += ' done';
+            else if (r === st.round) cls += ' cur';
+            return <span key={r} className={cls} />;
+          })}
+        </div>
         <span className="chip mono" style={{ fontSize: 11 }}>{code}</span>
         {spectator && <span className="chip" style={{ color: 'var(--charge)' }}>👁 SPECTATING</span>}
         <div className="hud-spacer" />

@@ -61,6 +61,7 @@ export class Match {
       round: 0, senior: null, seniorAtStart: null,
       leadSuit: null, trick: [],
       pile: [], banks: { AC: [], BD: [] },
+      lastCollectRound: -10,
       aceLock: null, aceRule: true,
       rounds: [], collections: [], misdeals: 0,
       mem: freshMemory(),
@@ -266,12 +267,15 @@ export class Match {
     M.trick.forEach(p => M.pile.push(p.card));
 
     let collected = false, gained = 0;
-    if (M.round >= 3 && win.seat === M.seniorAtStart) {
+    const onCooldown = (M.round === M.lastCollectRound + 1);
+    const canCollect = (M.round >= 3) && (win.seat === M.seniorAtStart) && (!onCooldown || M.round === 13);
+    if (canCollect) {
       collected = true;
       gained = M.pile.length;
       M.banks[TEAM(win.seat)].push(...M.pile);
       M.collections.push({ round: M.round, seat: win.seat, team: TEAM(win.seat), cards: gained });
       M.pile = [];
+      M.lastCollectRound = M.round;
     }
 
     M.rounds.push({
