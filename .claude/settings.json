@@ -4,7 +4,11 @@
       "Bash(grep -rn \"^\\\\s*//.*\\\\|^\\\\s*/\\\\*\\\\|^\\\\s*\\\\*/\" backend/src frontend/src --include=\"*.js\" --include=\"*.ts\" --include=\"*.tsx\")",
       "Bash(grep -v \"//.*\\\\\\(Route\\\\|Component\\\\|props\\\\|const\\\\|return\\\\|Component:\\\\|middleware\\\\|phase\\\\|FIXME\\\\|HACK\\\\|TODO\\\\|NOTE\\\\|important\\\\|validation\\\\|guard\\\\|prevent\\\\|check\\\\|ensure\\\\|handle\\\\|error\\\\|client\\\\|server\\\\|keep\\\\|legacy\\\\|override\\\\\\)\")",
       "Bash(node --check \"c:/Users/Hashim Ali/Desktop/electron-card/backend/src/match.js\")",
-      "Bash(node --check \"c:/Users/Hashim Ali/Desktop/electron-card/frontend/src/game/engine.js\")"
+      "Bash(node --check \"c:/Users/Hashim Ali/Desktop/electron-card/frontend/src/game/engine.js\")",
+      "Bash(node --check backend/src/sockets.js)",
+      "Bash(node --check backend/src/match.js)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)"
     ]
   }
 }

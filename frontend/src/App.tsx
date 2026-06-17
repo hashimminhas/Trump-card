@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import Login from './screens/Login';
 import Register from './screens/Register';
@@ -25,11 +26,19 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 
 function Shell({ children }: { children: JSX.Element }) {
   const { user, isGuest, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="shell">
       <div className="shell-top">
         <span className="shell-logo">ELECTR<span className="dot" />N CARD</span>
-        <nav className="shell-nav">
+        <button
+          className={`hamburger${menuOpen ? ' open' : ''}`}
+          aria-label="Toggle menu"
+          onClick={() => setMenuOpen(o => !o)}
+        >
+          <span /><span /><span />
+        </button>
+        <nav className={`shell-nav${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
           <NavLink to="/" end>Home</NavLink>
           <NavLink to="/play">Play</NavLink>
           <NavLink to="/pair-lock-beta">Pair Lock beta</NavLink>

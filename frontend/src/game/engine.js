@@ -286,7 +286,12 @@ function cardEl(card,mini=false,trump=(G&&G.trump)){
   return el;
 }
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));$(id).classList.add('show');}
-function goHome(){cloud&&cloud.presence&&cloud.presence('online');token++;stopReplay();clearHumanTimer();show('screen-home');renderHomeStats();}
+function goHome(){
+  token++;stopReplay();clearHumanTimer();
+  cloud&&cloud.presence&&cloud.presence('online');
+  if(opts._reviewRecord){onExit&&onExit();return;}
+  show('screen-home');renderHomeStats();
+}
 function quitMatch(){if(confirm('Quit this match? It will not be saved.'))goHome();}
 function showRules(){show('screen-game');$('rules-overlay').classList.add('show');$('rules-overlay').dataset.fromHome='1';}
 function hideRules(){$('rules-overlay').classList.remove('show');if($('rules-overlay').dataset.fromHome==='1'){$('rules-overlay').dataset.fromHome='';goHome();}}
@@ -665,6 +670,36 @@ function insightText(rec){
   return P;
 }
 
+function renderSummary(rec){
+  const ac=rec.score.AC,bd=rec.score.BD,stranded=rec.score.stranded||0;
+  const r=$('sum-result');
+  if(rec.result==='DRAW'){
+    r.className='sum-result';r.textContent='DRAW';
+    $('sum-sub').textContent='Only a 52-0 sweep wins. The table resets.';
+    Snd.play('draw');
+  }else{
+    r.className='sum-result khoti';r.textContent='KHOTI';
+    $('sum-sub').textContent=`Team ${rec.result==='KHOTI_AC'?'AC':'BD'} swept all 52 cards. A perfect run.`;
+    Snd.play('win');setTimeout(khotiBurst,250);
+  }
+  $('sum-ac').textContent=ac;$('sum-bd').textContent=bd;
+  $('sum-stranded').textContent=stranded?`${stranded} cards stranded in the pile - banked by no one`:'No cards stranded - every card was banked';
+  const tl=$('sum-timeline');tl.innerHTML='';
+  for(let i=1;i<=13;i++){
+    const col=rec.collections.find(c=>c.round===i);
+    const t=document.createElement('div');t.className='tick'+(col?(' '+col.team.toLowerCase()):'');
+    t.style.height=(col?Math.min(14+col.cards*2.6,64):12)+'px';
+    if(col)t.title=`R${i}: ${col.seat} banked ${col.cards}`;
+    t.innerHTML=`<span class="rn">${i}</span>`;
+    tl.appendChild(t);
+  }
+  $('sum-insights').innerHTML='<h4>WHY THIS GAME ENDED THIS WAY</h4>'+insightText(rec).map(s=>`<p>${s}</p>`).join('');
+  lastRec=rec;
+  $('btn-view-report').onclick=()=>showReport(rec,'screen-summary');
+  $('btn-sum-replay').onclick=()=>openReplay(rec,'screen-summary');
+  show('screen-summary');
+}
+
 function endMatch(){
   G.over=true;clearHumanTimer();
   const ac=G.banks.AC.length,bd=G.banks.BD.length,stranded=G.pile.length;
@@ -683,35 +718,9 @@ function endMatch(){
   hist.unshift(rec);
   if(historyCap>0&&hist.length>historyCap)hist.length=historyCap;
   store.set('ec.history.v1',hist);
-  lastRec=rec;
   cloud&&cloud.presence&&cloud.presence('online');
   cloud&&cloud.saveMatch&&cloud.saveMatch(rec).catch(()=>{});
-
-  const r=$('sum-result');
-  if(result==='DRAW'){
-    r.className='sum-result';r.textContent='DRAW';
-    $('sum-sub').textContent='Only a 52–0 sweep wins. The table resets.';
-    Snd.play('draw');
-  }else{
-    r.className='sum-result khoti';r.textContent='KHOTI';
-    $('sum-sub').textContent=`Team ${result==='KHOTI_AC'?'AC':'BD'} swept all 52 cards. A perfect run.`;
-    Snd.play('win');setTimeout(khotiBurst,250);
-  }
-  $('sum-ac').textContent=ac;$('sum-bd').textContent=bd;
-  $('sum-stranded').textContent=stranded?`${stranded} cards stranded in the pile - banked by no one`:'No cards stranded - every card was banked';
-  const tl=$('sum-timeline');tl.innerHTML='';
-  for(let i=1;i<=13;i++){
-    const col=G.collections.find(c=>c.round===i);
-    const t=document.createElement('div');t.className='tick'+(col?(' '+col.team.toLowerCase()):'');
-    t.style.height=(col?Math.min(14+col.cards*2.6,64):12)+'px';
-    if(col)t.title=`R${i}: ${col.seat} banked ${col.cards}`;
-    t.innerHTML=`<span class="rn">${i}</span>`;
-    tl.appendChild(t);
-  }
-  $('sum-insights').innerHTML='<h4>WHY THIS GAME ENDED THIS WAY</h4>'+insightText(rec).map(s=>`<p>${s}</p>`).join('');
-  $('btn-view-report').onclick=()=>showReport(rec,'screen-summary');
-  $('btn-sum-replay').onclick=()=>openReplay(rec,'screen-summary');
-  show('screen-summary');
+  renderSummary(rec);
   renderHomeStats();
 }
 
@@ -1030,10 +1039,20 @@ if (exitBtn) {
     exitBtn.onclick = () => { token++; stopReplay(); clearHumanTimer(); cloud&&cloud.presence&&cloud.presence('online'); onExit(); };
   } else exitBtn.style.display = 'none';
 }
-if (cloud && cloud.listRecords) {
-  cloud.listRecords().then(recs => {
-    if (Array.isArray(recs)) { store.set('ec.history.v1', recs); renderHomeStats(); }
-  }).catch(() => {});
+if (opts._reviewRecord) {
+  /* Review mode: change "Play again" to a close button, seed cloud history, show the record */
+  const playBtn = document.querySelector('#screen-summary .sum-actions button');
+  if (playBtn) { playBtn.textContent = 'Close review'; playBtn.onclick = goHome; }
+  if (cloud && cloud.listRecords) {
+    cloud.listRecords().then(recs => { if (Array.isArray(recs)) store.set('ec.history.v1', recs); }).catch(() => {});
+  }
+  renderSummary(opts._reviewRecord);
+} else {
+  if (cloud && cloud.listRecords) {
+    cloud.listRecords().then(recs => {
+      if (Array.isArray(recs)) { store.set('ec.history.v1', recs); renderHomeStats(); }
+    }).catch(() => {});
+  }
 }
 return function unmount() {
   token++; stopReplay(); clearHumanTimer();
@@ -1041,4 +1060,8 @@ return function unmount() {
   document.removeEventListener('click', _clickSnd, true);
   root.innerHTML = '';
 };
+}
+
+export function mountMatchReview(root, { record, cloud = null, onExit = null } = {}) {
+  return mountElectronGame(root, { cloud, onExit, _reviewRecord: record });
 }

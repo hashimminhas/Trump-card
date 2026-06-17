@@ -137,6 +137,18 @@ export function initSockets(httpServer) {
       socket.emit('match_state', m.userSeat(userId) ? m.snapshot(userId) : m.snapshot(null));
     });
 
+    /* ---- room chat (1 message / 500 ms rate limit per socket) ---- */
+    let lastChatMs = 0;
+    socket.on('match:chat', (data) => {
+      const now = Date.now();
+      if (now - lastChatMs < 500) return;
+      lastChatMs = now;
+      const code = String(data?.code || '').toUpperCase();
+      const text = String(data?.text || '').slice(0, 300).trim();
+      if (!code || !text) return;
+      roomBroadcast(code, 'chat_message', { user: username, userId, text, ts: now });
+    });
+
     /* ---- disconnect ---- */
     socket.on('disconnect', () => {
       const s = sockets.get(userId);

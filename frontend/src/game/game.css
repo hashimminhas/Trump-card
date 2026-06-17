@@ -355,3 +355,39 @@ body.lt .card .corner{font-size:16px;}
   .scroll-area{padding:18px 14px;}
   .page-head{padding:14px 14px 0;}
 }
+
+@media (max-width:480px){
+  .card{width:42px;height:60px;}
+  .card .big{font-size:18px;}
+  .card .corner{font-size:10.5px;top:3px;left:3px;} .card .corner small{font-size:8.5px;}
+  body.lt .card .corner{font-size:11px;}
+  .card.mini{width:28px;height:39px;}
+  .card.mini .corner{font-size:8.5px;}
+  .trick-slot,.rp-slot{width:42px;height:60px;}
+  .slot-C{transform:translate(-50%,-50%) translateY(-100px) rotate(3deg);}
+  .slot-B{transform:translate(-50%,-50%) translateX(-108px) rotate(-6deg);}
+  .slot-D{transform:translate(-50%,-50%) translateX(108px) rotate(6deg);}
+  .slot-A{transform:translate(-50%,-50%) translateY(100px) rotate(-3deg);}
+  .rp-C{transform:translate(-50%,-50%) translateY(-100px) rotate(3deg);}
+  .rp-B{transform:translate(-50%,-50%) translateX(-108px) rotate(-6deg);}
+  .rp-D{transform:translate(-50%,-50%) translateX(108px) rotate(6deg);}
+  .rp-A{transform:translate(-50%,-50%) translateY(100px) rotate(-3deg);}
+  .pile-core{width:100px;height:100px;padding:6px;}
+  .pile-core .pc-trump{font-size:11px;} .pile-core .pc-trump .g{font-size:13px;}
+  .pile-core .pc-round{display:none;}
+  .pile-core .pc-senior{display:none;}
+  .pile-core .count{font-size:16px;}
+  .pile-core .pc-status{font-size:8px;padding:1px 6px;}
+  .avatar{width:34px;height:34px;font-size:13px;}
+  .seat .label{font-size:9.5px;}
+  .seat .cards-left{display:none;}
+  .hand{bottom:56px;} .hand .card{margin:0 -10px;}
+  .hud{gap:4px;padding:5px 8px;}
+  .meter{display:none;}
+  .khoti-chip{display:none;}
+  .round-track .seg-r{width:6px;height:4px;}
+  .sum-panel{padding:20px 14px;}
+  .sum-scores{gap:8px;}
+  .score-block{padding:11px 10px;}
+  .score-block .v{font-size:26px;}
+}
