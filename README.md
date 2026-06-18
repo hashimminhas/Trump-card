@@ -1,4 +1,4 @@
-# Electron Card
+﻿# Trump Card
 
 > Charge the pile. Hold the Senior seat. Sweep all 52 - or it's a draw.
 
@@ -6,9 +6,9 @@ A custom strategic 4-player card game with full online multiplayer, bots, replay
 
 ---
 
-## What is Electron Card?
+## What is Trump Card?
 
-Electron Card is a trick-taking card game for exactly four players split into two teams. It is not a point game - there are no scores to chase round by round. The only way to win is to bank every single card in the deck. Anything less is a draw.
+Trump Card is a trick-taking card game for exactly four players split into two teams. It is not a point game - there are no scores to chase round by round. The only way to win is to bank every single card in the deck. Anything less is a draw.
 
 The tension comes from a shared central pile. Every round's four cards charge the pile, but a team can only claim it by holding the Senior seat at exactly the right moment. Lose the Senior seat and the pile resets the clock on collection.
 
