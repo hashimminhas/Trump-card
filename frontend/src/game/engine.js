@@ -42,7 +42,7 @@ const seatName=s=>s==='A'?'You':s;
 
 /* ---------- settings ---------- */
 const settings=Object.assign(
-  {botDelay:3000,humanTimer:true,aceRule:true,sound:true,difficulty:'normal',rm:false,cb:false,lt:false},
+  {botDelay:3000,humanTimer:true,aceRule:true,sound:true,difficulty:'normal',trumpMode:'random',rm:false,cb:false,lt:false},
   store.get('ec.settings.v1')||{});
 function saveSettings(){store.set('ec.settings.v1',settings);}
 function applyA11y(){
@@ -447,9 +447,16 @@ async function runDeal(my){
   await sleep(1500);if(my!==token)return;
 
   if(G.chooser==='A'){
-    const suit=await humanTrumpSelect();
-    if(my!==token)return;
-    G.trump=suit;
+    if(settings.trumpMode==='manual'){
+      const suit=await humanTrumpSelect();
+      if(my!==token)return;
+      G.trump=suit;
+    }else{
+      banner(`Randomly choosing trump…`,0);
+      await sleep(settings.botDelay);
+      if(my!==token)return;
+      G.trump=botTrumpChoice(G.chooser);
+    }
   }else{
     banner(`<span class="accent">${G.chooser}</span> is choosing trump…`,0);
     setThinking(G.chooser,true);
@@ -1018,6 +1025,7 @@ async function rpPlay(){
   };
   segWire('speed-seg','botDelay',v=>+v);
   segWire('diff-seg','difficulty');
+  segWire('trump-seg','trumpMode');
   const tglWire=(id,key,after)=>{
     const t=$(id);t.classList.toggle('on',settings[key]);
     t.onclick=()=>{settings[key]=!settings[key];saveSettings();t.classList.toggle('on',settings[key]);after&&after();};
