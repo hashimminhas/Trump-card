@@ -1,7 +1,7 @@
 ﻿import { Server } from 'socket.io';
-import { verifyToken } from './auth.js';
-import { Friends, Notifs } from './db.js';
-import { matchFor, matchOfUser } from './match.js';
+import { verifyToken } from '../middleware/auth.js';
+import { Friends, Notifs } from '../database/db.js';
+import { matchFor, matchOfUser } from '../core/match.js';
 
 /**
  * Phase 3B socket layer.

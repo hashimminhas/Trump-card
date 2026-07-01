@@ -17,7 +17,7 @@ import {
   SEATS, TEAM, mulberry32, newDeck, shuffle, sameCard,
   legalMoves, trickWinner, botPick, botTrumpChoice, freshMemory
 } from './gameEngine.js';
-import { Matches } from './db.js';
+import { Matches } from '../database/db.js';
 
 const TURN_MS = Number(process.env.EC_TURN_MS || 60000);   // human turn timer
 const BOT_MS = Number(process.env.EC_BOT_MS || 1700);      // bot think time

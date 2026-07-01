@@ -1,9 +1,9 @@
 ﻿import { Router } from 'express';
-import { tx, Rooms, Users } from '../db.js';
-import { requireAuth } from '../auth.js';
-import { roomBroadcast, notifyUser, pushNotification, getIO } from '../sockets.js';
-import { Match, matchFor } from '../match.js';
-import { SEATS } from '../gameEngine.js';
+import { tx, Rooms, Users } from '../database/db.js';
+import { requireAuth } from '../middleware/auth.js';
+import { roomBroadcast, notifyUser, pushNotification, getIO } from '../websockets/sockets.js';
+import { Match, matchFor } from '../core/match.js';
+import { SEATS } from '../core/gameEngine.js';
 
 const r = Router();
 r.use(requireAuth);

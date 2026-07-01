@@ -1,8 +1,8 @@
 ﻿import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
-import { Users } from '../db.js';
-import { signToken, requireAuth } from '../auth.js';
+import { Users } from '../database/db.js';
+import { signToken, requireAuth } from '../middleware/auth.js';
 
 const r = Router();
 

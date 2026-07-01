@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { Notifs } from '../db.js';
-import { requireAuth } from '../auth.js';
+import { Notifs } from '../database/db.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const r = Router();
 r.use(requireAuth);

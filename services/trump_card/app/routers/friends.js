@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { Users, Friends } from '../db.js';
-import { requireAuth, rejectGuests } from '../auth.js';
-import { presenceOf, notifyUser, pushNotification } from '../sockets.js';
+import { Users, Friends } from '../database/db.js';
+import { requireAuth, rejectGuests } from '../middleware/auth.js';
+import { presenceOf, notifyUser, pushNotification } from '../websockets/sockets.js';
 
 const r = Router();
 r.use(requireAuth);

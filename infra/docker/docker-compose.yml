@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+  api:
+    build: ./services/trump_card
+    ports: ["3001:3001"]
+    environment:
+      - EC_JWT_SECRET=${EC_JWT_SECRET}
+  web:
+    build: ./apps/web
+    ports: ["80:80"]
+    depends_on: [api]
