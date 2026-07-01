@@ -5,12 +5,12 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
 
-import authRoutes from './routes/auth.js';
-import profileRoutes from './routes/profile.js';
-import friendRoutes from './routes/friends.js';
-import roomRoutes from './routes/rooms.js';
-import notificationRoutes from './routes/notifications.js';
-import { initSockets } from './sockets.js';
+import authRoutes from './routers/auth.js';
+import profileRoutes from './routers/profile.js';
+import friendRoutes from './routers/friends.js';
+import roomRoutes from './routers/rooms.js';
+import notificationRoutes from './routers/notifications.js';
+import { initSockets } from './websockets/sockets.js';
 
 const app = express();
 app.use(cors());
@@ -23,9 +23,9 @@ app.use('/api', friendRoutes);
 app.use('/api', roomRoutes);
 app.use('/api', notificationRoutes);
 
-/* Serve the built frontend in production (frontend/dist) */
+/* Serve the built frontend in production (apps/web/dist) */
 const here = dirname(fileURLToPath(import.meta.url));
-const dist = join(here, '..', '..', 'frontend', 'dist');
+const dist = join(here, '..', '..', '..', 'apps', 'web', 'dist');
 if (existsSync(dist)) {
   app.use(express.static(dist));
   app.get(/^\/(?!api|socket\.io).*/, (_req, res) => res.sendFile(join(dist, 'index.html')));

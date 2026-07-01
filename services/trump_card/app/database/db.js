@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const dbPath = process.env.EC_DB || join(here, '..', 'electron-card.db');
+const dbPath = process.env.EC_DB || join(here, '..', '..', 'electron-card.db');
 
 export const db = new DatabaseSync(dbPath);
 db.exec('PRAGMA journal_mode = WAL');

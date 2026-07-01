@@ -3,10 +3,9 @@
   "version": "3.0.0-alpha",
   "private": true,
   "scripts": {
-    "install:all": "cd backend && npm install && cd ../frontend && npm install",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build",
-    "start": "cd backend && npm start"
+    "dev:backend": "cd services/trump_card && npm run dev",
+    "dev:frontend": "cd apps/web && npm run dev",
+    "build": "cd apps/web && npm run build",
+    "start": "cd services/trump_card && npm start"
   }
 }
