@@ -268,8 +268,21 @@ export class Match {
 
     let collected = false, gained = 0;
     const onCooldown = (M.round === M.lastCollectRound + 1);
-    const canCollect = (M.round >= 3) && (win.seat === M.seniorAtStart) && (!onCooldown || M.round === 13);
-    if (canCollect) {
+
+    // New rule: if a collection happened in round 12, then round 13 is
+    // automatically collected by whoever was Senior at the start of round 13.
+    const forceSeniorCollect = (M.round === 13 && M.lastCollectRound === 12);
+
+    const canCollect = !forceSeniorCollect && (M.round >= 3) && (win.seat === M.seniorAtStart) && (!onCooldown || M.round === 13);
+    if (forceSeniorCollect) {
+      collected = true;
+      gained = M.pile.length;
+      // award to the team that was Senior at the start of this round
+      M.banks[TEAM(M.seniorAtStart)].push(...M.pile);
+      M.collections.push({ round: M.round, seat: M.seniorAtStart, team: TEAM(M.seniorAtStart), cards: gained });
+      M.pile = [];
+      M.lastCollectRound = M.round;
+    } else if (canCollect) {
       collected = true;
       gained = M.pile.length;
       M.banks[TEAM(win.seat)].push(...M.pile);

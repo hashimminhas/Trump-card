@@ -16,6 +16,8 @@ export const TEMPLATE = `
     </div>
     <div class="home-card">
       <h3>GAME</h3>
+      <div class="setting-row"><span>Trump selection</span>
+        <div class="seg" id="trump-seg"><button data-v="random" class="on">Random</button><button data-v="manual">Manual</button></div></div>
       <div class="setting-row"><span>Bot difficulty</span>
         <div class="seg" id="diff-seg"><button data-v="easy">Easy</button><button data-v="normal" class="on">Normal</button><button data-v="hard">Hard</button></div></div>
       <div class="setting-row"><span>Bot thinking time</span>

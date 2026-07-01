@@ -5,8 +5,14 @@
   "type": "module",
   "main": "app/main.js",
   "scripts": {
+<<<<<<< HEAD:services/trump_card/package.json
     "dev": "node --watch app/main.js",
     "start": "node app/main.js"
+=======
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test:use-case": "node use-case-tests/auth-room-smoke.js"
+>>>>>>> origin/main:backend/package.json
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
