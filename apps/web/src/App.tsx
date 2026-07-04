@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import Login from './screens/Login';
 import Register from './screens/Register';
-import Hub from './screens/Hub';
 import Profile from './screens/Profile';
 import Friends from './screens/Friends';
 import Rooms from './screens/Rooms';
@@ -15,6 +14,8 @@ import Forgot from './screens/Forgot';
 import Reset from './screens/Reset';
 import NotificationBell from './components/NotificationBell';
 import { Toasts } from './components/ui';
+
+// Hub removed — Play is now the home page
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth();
@@ -30,7 +31,7 @@ function Shell({ children }: { children: JSX.Element }) {
   return (
     <div className="shell">
       <div className="shell-top">
-        <span className="shell-logo">ELECTR<span className="dot" />N CARD</span>
+        <span className="shell-logo">TRUMP<span className="dot" />CARD</span>
         <button
           className={`hamburger${menuOpen ? ' open' : ''}`}
           aria-label="Toggle menu"
@@ -39,12 +40,12 @@ function Shell({ children }: { children: JSX.Element }) {
           <span /><span /><span />
         </button>
         <nav className={`shell-nav${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
+          {/* Home = Play page */}
           <NavLink to="/" end>Home</NavLink>
-          <NavLink to="/play">Play</NavLink>
-          <NavLink to="/pair-lock-beta">Pair Lock beta</NavLink>
+          <NavLink to="/pair-lock">Pair Lock</NavLink>
           {!isGuest && <NavLink to="/profile">Profile</NavLink>}
           {!isGuest && <NavLink to="/friends">Friends</NavLink>}
-          <NavLink to="/rooms">Rooms</NavLink>
+          <NavLink to="/rooms">Private Room</NavLink>
         </nav>
         <span className="shell-spacer" />
         {isGuest
@@ -62,21 +63,27 @@ export default function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot" element={<Forgot />} />
-        <Route path="/reset/:token" element={<Reset />} />
-        <Route path="/play" element={<RequireAuth><Play /></RequireAuth>} />
-        <Route path="/pair-lock-beta" element={<RequireAuth><Shell><PairLock /></Shell></RequireAuth>} />
-        <Route path="/" element={<RequireAuth><Shell><Hub /></Shell></RequireAuth>} />
-        <Route path="/upgrade" element={<RequireAuth><Shell><Upgrade /></Shell></RequireAuth>} />
-        <Route path="/profile" element={<RequireAuth><Shell><Profile /></Shell></RequireAuth>} />
-        <Route path="/profile/:username" element={<RequireAuth><Shell><Profile /></Shell></RequireAuth>} />
-        <Route path="/friends" element={<RequireAuth><Shell><Friends /></Shell></RequireAuth>} />
-        <Route path="/rooms" element={<RequireAuth><Shell><Rooms /></Shell></RequireAuth>} />
-        <Route path="/room/:code" element={<RequireAuth><Shell><Lobby /></Shell></RequireAuth>} />
-        <Route path="/lobby/:code" element={<RequireAuth><Shell><Lobby /></Shell></RequireAuth>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Auth pages — no shell */}
+        <Route path="/login"          element={<Login />} />
+        <Route path="/register"       element={<Register />} />
+        <Route path="/forgot"         element={<Forgot />} />
+        <Route path="/reset/:token"   element={<Reset />} />
+
+        {/* Home = Play (the main Trump Card game) — has its own shell built-in */}
+        <Route path="/" element={<RequireAuth><Play /></RequireAuth>} />
+
+        {/* Pair Lock — landing page first, then game */}
+        <Route path="/pair-lock" element={<RequireAuth><Shell><PairLock /></Shell></RequireAuth>} />
+
+        {/* Other pages */}
+        <Route path="/upgrade"            element={<RequireAuth><Shell><Upgrade /></Shell></RequireAuth>} />
+        <Route path="/profile"            element={<RequireAuth><Shell><Profile /></Shell></RequireAuth>} />
+        <Route path="/profile/:username"  element={<RequireAuth><Shell><Profile /></Shell></RequireAuth>} />
+        <Route path="/friends"            element={<RequireAuth><Shell><Friends /></Shell></RequireAuth>} />
+        <Route path="/rooms"              element={<RequireAuth><Shell><Rooms /></Shell></RequireAuth>} />
+        <Route path="/room/:code"         element={<RequireAuth><Shell><Lobby /></Shell></RequireAuth>} />
+        <Route path="/lobby/:code"        element={<RequireAuth><Shell><Lobby /></Shell></RequireAuth>} />
+        <Route path="*"                   element={<Navigate to="/" replace />} />
       </Routes>
       <Toasts />
     </AuthProvider>

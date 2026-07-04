@@ -608,8 +608,9 @@ async function resolveRound(my){
       const el=$('slot-'+p.seat).firstChild;
       if(el){el.classList.remove('win-glow','dimmed');el.classList.add('sink');}
     }
-    const reason=G.round<3?'no collection before Round 3':`Senior seat broken - ${win.seat} wasn't Senior at round start`;
-    banner(`<b>${win.seat==='A'?'You win':win.seat+' wins'} R${G.round}</b> (${why})<small>pile charges to ${G.pile.length} · ${reason}</small>`,2100);
+    // Round-end banner suppressed: only show banner when a pile is actually collected.
+    // const reason=G.round<3?'no collection before Round 3':`Senior seat broken - ${win.seat} wasn't Senior at round start`;
+    // banner(`<b>${win.seat==='A'?'You win':win.seat+' wins'} R${G.round}</b> (${why})<small>pile charges to ${G.pile.length} · ${reason}</small>`,2100);
   }
 
   G.rounds.push({
@@ -1040,13 +1041,7 @@ async function rpPlay(){
 })();
 /* ---- module wiring (Phase 3A) ---- */
 Object.assign(window, { startMatch, showHistory, showStats, showRules, hideRules, goHome, quitMatch });
-const exitBtn = document.getElementById('btn-exit-account');
-if (exitBtn) {
-  if (onExit) {
-    exitBtn.style.display = '';
-    exitBtn.onclick = () => { token++; stopReplay(); clearHumanTimer(); cloud&&cloud.presence&&cloud.presence('online'); onExit(); };
-  } else exitBtn.style.display = 'none';
-}
+// btn-exit-account removed from template — Other Game and Private Room buttons handle navigation
 if (opts._reviewRecord) {
   /* Review mode: change "Play again" to a close button, seed cloud history, show the record */
   const playBtn = document.querySelector('#screen-summary .sum-actions button');

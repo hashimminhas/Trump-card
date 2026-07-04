@@ -300,3 +300,16 @@
   .bell-panel { width: calc(100vw - 24px); right: -6px; }
   .chat-panel { height: 60%; }
 }
+
+/* ---- game canvas roots: must fill the viewport so they never show as black ---- */
+.ec-game-root {
+  width: 100%;
+  min-height: calc(100vh - 54px); /* full height minus navbar */
+  display: block;
+}
+
+.pairlock-root {
+  width: 100%;
+  min-height: calc(100vh - 54px);
+  display: block;
+}

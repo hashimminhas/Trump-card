@@ -5,14 +5,15 @@ export const TEMPLATE = `
 <!-- ================= HOME ================= -->
 <div class="screen show" id="screen-home">
   <div class="home-inner">
-    <div class="logo">ELECTR<span class="o-core"></span>N<br>CARD</div>
+    <div class="logo">TRUMP<br>CARD</div>
     <div class="tagline">Charge the pile. Hold the Senior seat. Sweep all 52 - or it's a draw.</div>
     <div class="home-actions">
       <button class="btn btn-primary" onclick="startMatch()">New match</button>
       <button class="btn btn-ghost" onclick="showHistory()">Match history</button>
       <button class="btn btn-ghost" onclick="showStats()">Statistics</button>
       <button class="btn btn-ghost" onclick="showRules()">How to play</button>
-      <button class="btn btn-ghost" id="btn-exit-account" style="display:none;">← Back to account</button>
+      <button class="btn btn-ghost" id="btn-other-game" onclick="window.location.href='/pair-lock'">🎴 Other Game</button>
+      <button class="btn btn-ghost" id="btn-rooms" onclick="window.location.href='/rooms'">🔒 Private Room</button>
     </div>
     <div class="home-card">
       <h3>GAME</h3>
