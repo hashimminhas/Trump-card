@@ -54,10 +54,6 @@ export function mountPairLock(container, config = {}) {
     <div class="status-panel" id="status"></div>
   </div>
 
-  <div class="log-col">
-    <div class="log-head"><span class="dot"></span> GAME LOG</div>
-    <div class="log" id="log"></div>
-  </div>
 </div>
 
 <div class="overlay" id="overlay">
