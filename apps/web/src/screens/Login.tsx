@@ -1,5 +1,5 @@
-﻿import { FormEvent, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FormEvent, useState } from 'react';
+import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 export default function Login() {
@@ -12,8 +12,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const from = loc.state?.from?.pathname || '/';
   const roomInvite = /^\/(room|lobby)\//.test(from) ? from.split('/').pop()?.toUpperCase() : null;
-  if (user) { nav('/'); return null; }
-
+  if (user) { return <Navigate to="/" replace />; }
   async function playAsGuest() {
     setErr(''); setBusy(true);
     try { await guest(); nav(from); }

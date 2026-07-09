@@ -98,16 +98,17 @@ body.rm *,body.rm *::before,body.rm *::after{animation-duration:.001s !important
   background:radial-gradient(ellipse 46% 36% at 50% 40%,rgba(255,235,190,.05),transparent 70%);}
 .table-wrap::after{content:'';position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(ellipse 120% 110% at 50% 50%,transparent 55%,rgba(0,0,0,.4) 100%);}
-.table-oval{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);
+/* table-oval hidden — remove display:none below to restore the outer decorative circle */
+.table-oval{display:none;position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);
   width:min(86vw,840px);height:min(64vh,540px);border-radius:50%;
   border:1px solid rgba(255,255,255,.05);box-shadow:inset 0 0 90px rgba(0,0,0,.4);}
 
 /* --- Seats --- */
 .seat{position:absolute;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:10;}
-.seat-C{top:5%;left:50%;transform:translateX(-50%);}
-.seat-B{left:4%;top:42%;transform:translateY(-50%);}
-.seat-D{right:4%;top:42%;transform:translateY(-50%);}
-.seat-A{bottom:2%;left:50%;transform:translateX(-50%);}
+.seat-C{top:5%;left:80%;transform:translateX(-50%);}
+.seat-B{left:2%;top:20%;transform:translateY(-50%);}
+.seat-D{right:2%;top:80%;transform:translateY(-50%);}
+.seat-A{bottom:5%;left:5%;transform:translateX(-50%);}
 .avatar{width:52px;height:52px;border-radius:50%;position:relative;
   background:linear-gradient(145deg,#2A3147,#1C2233);border:1px solid rgba(255,255,255,.12);
   display:flex;align-items:center;justify-content:center;
@@ -136,7 +137,7 @@ body.rm *,body.rm *::before,body.rm *::after{animation-duration:.001s !important
 
 /* --- Pile core: central info hub --- */
 .pile-core{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);
-  width:168px;height:168px;border-radius:50%;z-index:5;
+  width:200px;height:200px;border-radius:50%;z-index:5;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   border:2px solid rgba(242,179,61,.25);
   background:radial-gradient(circle at 50% 38%,rgba(242,179,61,.06),rgba(16,20,31,.74));
@@ -199,7 +200,7 @@ body.lt .card .corner{font-size:16px;}
 .card.mini.winr{outline:2px solid var(--charge);outline-offset:1px;}
 
 /* --- Hand --- */
-.hand{position:absolute;bottom:64px;left:50%;transform:translateX(-50%);display:flex;z-index:15;justify-content:center;max-width:96vw;}
+.hand{position:absolute;bottom:128px;left:18%;transform:translateX(-50%);display:flex;z-index:15;justify-content:center;max-width:96vw;}
 .hand .card{margin:0 -16px;transition:transform .2s cubic-bezier(.22,1,.36,1),filter .25s,box-shadow .2s;cursor:default;}
 .hand .card.legal{cursor:pointer;}
 .hand .card.legal:hover{transform:translateY(-22px) !important;z-index:40;box-shadow:0 10px 26px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.06);}
@@ -213,10 +214,10 @@ body.lt .card .corner{font-size:16px;}
 
 /* --- Banner --- */
 .banner{position:absolute;top:13%;left:50%;transform:translateX(-50%) translateY(-8px);
-  background:rgba(16,20,31,.92);border:1px solid rgba(255,255,255,.1);
-  padding:10px 22px;border-radius:12px;font-weight:600;font-size:15px;
+  background:transparent;border:none;
+  padding:4px 0;border-radius:0;font-weight:600;font-size:14px;
   z-index:40;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
-  text-align:center;max-width:88vw;backdrop-filter:blur(6px);}
+  text-align:center;max-width:88vw;}
 .banner.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .banner .accent{color:var(--charge);}
 .banner.collect{border-color:rgba(242,179,61,.5);box-shadow:0 0 30px rgba(242,179,61,.25);}
