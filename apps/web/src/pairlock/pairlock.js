@@ -496,11 +496,13 @@ export function mountPairLock(container, config = {}) {
   document.getElementById('btnExit').onclick = () => { if(config.onExit) config.onExit(); };
   document.getElementById('btnExitModal').onclick = () => { if(config.onExit) config.onExit(); };
 
-  document.getElementById('btnToggleLog').onclick=()=>{
-    document.getElementById('logCol').classList.add('open');
+  const btnToggleLog = document.getElementById('btnToggleLog');
+  if (btnToggleLog) btnToggleLog.onclick = () => {
+    document.getElementById('logCol')?.classList.add('open');
   };
-  document.getElementById('btnCloseLog').onclick=()=>{
-    document.getElementById('logCol').classList.remove('open');
+  const btnCloseLog = document.getElementById('btnCloseLog');
+  if (btnCloseLog) btnCloseLog.onclick = () => {
+    document.getElementById('logCol')?.classList.remove('open');
   };
 
   newGame();
