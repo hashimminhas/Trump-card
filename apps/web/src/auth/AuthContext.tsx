@@ -21,20 +21,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!getToken()) { setLoading(false); return; }
+    const token = getToken();
+    if (!token) { setLoading(false); return; }
+    // Optimistically load cached user so page renders immediately
+    try {
+      const cached = localStorage.getItem('ec.user.cache');
+      if (cached) { setUser(JSON.parse(cached)); setLoading(false); }
+    } catch {}
+    // Verify token is still valid in background
     api<{ user: User }>('/me')
-      .then(d => { setUser(d.user); getSocket(); })
-      .catch(() => setToken(null))
+      .then(d => {
+        setUser(d.user); getSocket();
+        try { localStorage.setItem('ec.user.cache', JSON.stringify(d.user)); } catch {}
+      })
+      .catch(() => { setToken(null); setUser(null); localStorage.removeItem('ec.user.cache'); })
       .finally(() => setLoading(false));
   }, []);
 
   async function login(loginId: string, password: string) {
     const d = await api<{ token: string; user: User }>('/login', { method: 'POST', json: { login: loginId, password } });
     setToken(d.token); setUser(d.user); getSocket();
+    try { localStorage.setItem('ec.user.cache', JSON.stringify(d.user)); } catch {}
   }
   async function register(username: string, email: string, password: string) {
     const d = await api<{ token: string; user: User }>('/register', { method: 'POST', json: { username, email, password } });
     setToken(d.token); setUser(d.user); getSocket();
+    try { localStorage.setItem('ec.user.cache', JSON.stringify(d.user)); } catch {}
   }
   /** Guest mode: resume the locally stored guest identity if it's still valid, else mint a new one. */
   async function guest() {
@@ -54,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }));
     } catch {}
     setToken(d.token); setUser(d.user); getSocket();
+    try { localStorage.setItem('ec.user.cache', JSON.stringify(d.user)); } catch {}
   }
   /** Convert this guest into a real account, then sync local history to the cloud. */
   async function upgrade(username: string, email: string, password: string) {
@@ -68,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
   function logout() {
     setToken(null); setUser(null); dropSocket();
+    try { localStorage.removeItem('ec.user.cache'); } catch {}
   }
 
   return <Ctx.Provider value={{

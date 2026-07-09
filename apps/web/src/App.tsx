@@ -9,6 +9,7 @@ import Rooms from './screens/Rooms';
 import Lobby from './screens/Lobby';
 import Play from './screens/Play';
 import PairLock from './screens/PairLock';
+import OtherGames from './screens/OtherGames';
 import Upgrade from './screens/Upgrade';
 import Forgot from './screens/Forgot';
 import Reset from './screens/Reset';
@@ -20,7 +21,7 @@ import { Toasts } from './components/ui';
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth();
   const loc = useLocation();
-  if (loading) return <div className="shell"><div className="spin">loading…</div></div>;
+  if (loading && !user) return <div className="shell" style={{ minHeight: '100vh' }}><div className="spin">loading…</div></div>;
   if (!user) return <Navigate to="/login" state={{ from: loc }} replace />;
   return children;
 }
@@ -29,7 +30,7 @@ function Shell({ children }: { children: JSX.Element }) {
   const { user, isGuest, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <div className="shell">
+    <div className="shell" style={{ minHeight: '100vh' }}>
       <div className="shell-top">
         <span className="shell-logo">TRUMP<span className="dot" />CARD</span>
         <button
@@ -42,7 +43,7 @@ function Shell({ children }: { children: JSX.Element }) {
         <nav className={`shell-nav${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
           {/* Home = Play page */}
           <NavLink to="/" end>Home</NavLink>
-          <NavLink to="/pair-lock">Pair Lock</NavLink>
+          <NavLink to="/other-games">Other Games</NavLink>
           {!isGuest && <NavLink to="/profile">Profile</NavLink>}
           {!isGuest && <NavLink to="/friends">Friends</NavLink>}
           <NavLink to="/rooms">Private Room</NavLink>
@@ -73,7 +74,8 @@ export default function App() {
         <Route path="/" element={<RequireAuth><Play /></RequireAuth>} />
 
         {/* Pair Lock — landing page first, then game */}
-        <Route path="/pair-lock" element={<RequireAuth><Shell><PairLock /></Shell></RequireAuth>} />
+        <Route path="/other-games" element={<RequireAuth><Shell><OtherGames /></Shell></RequireAuth>} />
+        <Route path="/other-games/pair-lock" element={<RequireAuth><Shell><PairLock /></Shell></RequireAuth>} />
 
         {/* Other pages */}
         <Route path="/upgrade"            element={<RequireAuth><Shell><Upgrade /></Shell></RequireAuth>} />

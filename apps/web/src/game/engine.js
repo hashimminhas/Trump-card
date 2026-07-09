@@ -289,6 +289,7 @@ function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.re
 function goHome(){
   token++;stopReplay();clearHumanTimer();
   cloud&&cloud.presence&&cloud.presence('online');
+  opts.onGameEnd&&opts.onGameEnd();      // notify React navbar to show again
   if(opts._reviewRecord){onExit&&onExit();return;}
   show('screen-home');renderHomeStats();
 }
@@ -422,6 +423,7 @@ function startHumanTimer(onTimeout){
    MATCH FLOW
 ===================================================== */
 async function startMatch(){
+  opts.onGameStart&&opts.onGameStart();   // notify React navbar to hide
   cloud&&cloud.presence&&cloud.presence('in_match');
   token++;const my=token;
   stopReplay();clearHumanTimer();

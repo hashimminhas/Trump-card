@@ -1,4 +1,4 @@
-﻿/* Shell screens (login / profile / friends / rooms) - same design system as the table.
+/* Shell screens (login / profile / friends / rooms) - same design system as the table.
    Game tokens & primitives (.btn, .chip, .toggle, .seg, …) come from game/game.css. */
 
 .shell {
@@ -26,7 +26,7 @@
 .shell-spacer { flex: 1; }
 .shell-user { font-size: 13px; color: var(--ink-dim); font-family: var(--mono); }
 
-.shell-main { flex: 1; width: 100%; max-width: 860px; margin: 0 auto; padding: 30px 22px 60px; }
+.shell-main { flex: 1; min-height: calc(100vh - 54px); width: 100%; max-width: 860px; margin: 0 auto; padding: 30px 22px 60px; }
 .shell-main h1 { font-family: var(--display); font-weight: 700; font-size: 28px; margin-bottom: 18px; }
 .shell-main h2 { font-family: var(--display); font-weight: 700; font-size: 19px; margin: 26px 0 12px; }
 
@@ -304,7 +304,7 @@
 /* ---- game canvas roots: must fill the viewport so they never show as black ---- */
 .ec-game-root {
   width: 100%;
-  min-height: calc(100vh - 54px); /* full height minus navbar */
+  min-height: 100vh;
   display: block;
 }
 

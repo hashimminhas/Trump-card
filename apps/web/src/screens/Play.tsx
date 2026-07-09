@@ -1,7 +1,9 @@
-﻿import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth/AuthContext';
 import { getSocket } from '../socket';
+import NotificationBell from '../components/NotificationBell';
 // @ts-ignore
 import { mountElectronGame } from '../game/engine.js';
 
@@ -10,32 +12,78 @@ function makeCloud() {
     async listRecords() {
       try {
         const local = JSON.parse(localStorage.getItem('ec.history.v1') || '[]');
-        if (Array.isArray(local) && local.length) {
+        if (Array.isArray(local) && local.length)
           await api('/matches/import', { method: 'POST', json: { records: local } });
-        }
       } catch { /* fine */ }
       const d = await api<{ records: any[] }>('/match-history/full');
       return d.records;
     },
     saveMatch(rec: any) { return api('/matches', { method: 'POST', json: rec }); },
-    presence(status: 'online' | 'in_match') { getSocket()?.emit('presence:set', status); }
+    presence(s: 'online' | 'in_match') { getSocket()?.emit('presence:set', s); }
   };
 }
 
 export default function Play() {
-  const { isGuest } = useAuth();
+  const { user, isGuest, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [inGame, setInGame] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const isGuestRef = useRef(isGuest);
+  isGuestRef.current = isGuest;
 
   useEffect(() => {
     if (!ref.current) return;
-    // Mount the game immediately — this IS the home page
     const unmount = mountElectronGame(ref.current, {
-      cloud: isGuest ? null : makeCloud(),
-      historyCap: isGuest ? 10 : 0,
-      // No onExit — the navbar buttons (Other Game, Private Room) handle navigation
+      cloud: isGuestRef.current ? null : makeCloud(),
+      historyCap: isGuestRef.current ? 10 : 0,
+      onGameStart: () => setInGame(true),
+      onGameEnd:   () => setInGame(false),
     });
     return () => { unmount(); getSocket()?.emit('presence:set', 'online'); };
   }, []);
 
-  return <div ref={ref} style={{ width: '100%', minHeight: '100vh' }} />;
+  return (
+    <div className="shell">
+      {!inGame && (
+        <div className="shell-top">
+          <span className="shell-logo">TRUMP<span className="dot" />CARD</span>
+          <button
+            className={`hamburger${menuOpen ? ' open' : ''}`}
+            aria-label="Toggle menu"
+            onClick={() => setMenuOpen(o => !o)}
+          >
+            <span /><span /><span />
+          </button>
+          <nav className={`shell-nav${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
+            <NavLink to="/" end>Home</NavLink>
+            <NavLink to="/other-games">Other Games</NavLink>
+            {!isGuest && <NavLink to="/profile">Profile</NavLink>}
+            {!isGuest && <NavLink to="/friends">Friends</NavLink>}
+            <NavLink to="/rooms">Private Room</NavLink>
+          </nav>
+          <span className="shell-spacer" />
+          {isGuest
+            ? <NavLink to="/upgrade" className="btn btn-sm btn-upgrade">Create account</NavLink>
+            : <NotificationBell />}
+          <span className="shell-user">{user?.username}{isGuest ? ' (guest)' : ''}</span>
+          <button className="btn btn-ghost btn-sm" onClick={logout}>
+            {isGuest ? 'Exit guest' : 'Log out'}
+          </button>
+        </div>
+      )}
+
+      <div
+        ref={ref}
+        className="ec-game-root"
+        style={{
+          width: '100%',
+          minHeight: inGame ? '100vh' : 'calc(100vh - 54px)',
+          position: inGame ? 'fixed' as const : 'relative' as const,
+          top: 0, left: 0,
+          zIndex: inGame ? 100 : 'auto' as any,
+          display: 'block'
+        }}
+      />
+    </div>
+  );
 }

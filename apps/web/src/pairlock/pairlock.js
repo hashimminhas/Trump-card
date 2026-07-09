@@ -8,6 +8,7 @@ export function mountPairLock(container, config = {}) {
       <div class="scores">
         <div class="score-pill"><span class="who">Bot</span><b id="botScore">0</b></div>
         <div class="score-pill you"><span class="who">You</span><b id="youScore">0</b></div>
+        <button id="btnToggleLog" class="btn ghost" style="padding:6px 12px;font-size:12px;margin-left:8px;">Log</button>
         <button id="btnExit" class="btn ghost" style="padding:6px 12px;font-size:12px;margin-left:8px;">Exit</button>
       </div>
     </div>
@@ -54,6 +55,13 @@ export function mountPairLock(container, config = {}) {
     <div class="status-panel" id="status"></div>
   </div>
 
+  <div class="log-col" id="logCol">
+    <div class="log-head">
+      <span class="dot"></span> GAME LOG
+      <button id="btnCloseLog" class="btn ghost" style="margin-left:auto;padding:2px 8px;font-size:12px;">Close</button>
+    </div>
+    <div class="log" id="log"></div>
+  </div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -487,6 +495,13 @@ export function mountPairLock(container, config = {}) {
   
   document.getElementById('btnExit').onclick = () => { if(config.onExit) config.onExit(); };
   document.getElementById('btnExitModal').onclick = () => { if(config.onExit) config.onExit(); };
+
+  document.getElementById('btnToggleLog').onclick=()=>{
+    document.getElementById('logCol').classList.add('open');
+  };
+  document.getElementById('btnCloseLog').onclick=()=>{
+    document.getElementById('logCol').classList.remove('open');
+  };
 
   newGame();
 
