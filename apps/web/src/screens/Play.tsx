@@ -43,7 +43,7 @@ export default function Play() {
   }, []);
 
   return (
-    <div className="shell">
+    <div className="shell" style={{ minHeight: '100vh' }}>
       {!inGame && (
         <div className="shell-top">
           <span className="shell-logo">TRUMP<span className="dot" />CARD</span>
@@ -77,11 +77,15 @@ export default function Play() {
         className="ec-game-root"
         style={{
           width: '100%',
-          minHeight: inGame ? '100vh' : 'calc(100vh - 54px)',
-          position: inGame ? 'fixed' as const : 'relative' as const,
-          top: 0, left: 0,
-          zIndex: inGame ? 100 : 'auto' as any,
-          display: 'block'
+          minHeight: 'calc(100vh - 54px)',
+          display: 'block',
+          ...(inGame ? {
+            position: 'fixed' as const,
+            inset: 0,
+            zIndex: 100,
+            width: '100vw',
+            height: '100vh'
+          } : {})
         }}
       />
     </div>

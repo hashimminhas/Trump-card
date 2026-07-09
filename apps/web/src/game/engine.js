@@ -405,7 +405,14 @@ const _kbHandler=e=>{
 document.addEventListener('keydown',_kbHandler);
 
 /* ---------- human timer ---------- */
-function clearHumanTimer(){clearInterval(humanTimerInt);humanTimerInt=null;$('seat-A').classList.remove('timed');$('timer-ring').style.background='';}
+function clearHumanTimer(){
+  clearInterval(humanTimerInt);
+  humanTimerInt=null;
+  const seatA=$('seat-A');
+  if(seatA) seatA.classList.remove('timed');
+  const ring=$('timer-ring');
+  if(ring) ring.style.background='';
+}
 function startHumanTimer(onTimeout){
   if(!settings.humanTimer)return;
   const total=60000;let left=total;

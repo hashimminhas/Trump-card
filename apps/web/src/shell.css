@@ -304,12 +304,12 @@
 /* ---- game canvas roots: must fill the viewport so they never show as black ---- */
 .ec-game-root {
   width: 100%;
-  min-height: 100vh;
+  min-height: calc(100vh - 54px);
   display: block;
 }
 
 .pairlock-root {
   width: 100%;
-  min-height: calc(100vh - 54px);
+  min-height: 100vh;
   display: block;
 }
