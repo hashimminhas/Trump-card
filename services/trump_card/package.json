@@ -6,8 +6,14 @@
   "main": "app/main.js",
   "scripts": {
     "dev": "node --watch app/main.js",
+    "dev:fast": "cross-env EC_TURN_MS=2500 EC_BOT_MS=300 EC_PAUSE_MS=300 EC_GAP_MS=300 node --watch app/main.js",
+    "test:social": "cross-env EC_TURN_MS=2500 EC_BOT_MS=300 EC_PAUSE_MS=300 EC_GAP_MS=300 node tests/social.test.js",
     "start": "node app/main.js",
-    "test": "node tests/auth-room-smoke.js"
+    "test": "node --test tests/banking.test.js tests/engine.test.js",
+    "test:banking": "node --test tests/banking.test.js",
+    "test:engine": "node --test tests/engine.test.js",
+    "test:rooms": "cross-env EC_TURN_MS=2500 EC_BOT_MS=300 EC_PAUSE_MS=300 EC_GAP_MS=300 node tests/rooms.test.js",
+    "start:fast": "cross-env EC_TURN_MS=2500 EC_BOT_MS=300 EC_PAUSE_MS=300 EC_GAP_MS=300 node app/main.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -15,5 +21,9 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "socket.io-client": "^4.8.3"
   }
 }
