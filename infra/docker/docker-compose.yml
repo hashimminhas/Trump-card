@@ -1,11 +1,40 @@
 version: "3.9"
+
 services:
   api:
-    build: ./services/trump_card
-    ports: ["3001:3001"]
+    build:
+      context: ../../services/trump_card
+      dockerfile: Dockerfile
+    container_name: trump-card-api
+    ports:
+      - "3001:3001"
     environment:
-      - EC_JWT_SECRET=${EC_JWT_SECRET}
+      - EC_JWT_SECRET=${EC_JWT_SECRET:-local-dev-secret}
+      - EC_DB=/data/trump-card.db
+      - PORT=3001
+      - NODE_ENV=development
+    volumes:
+      # Persist the SQLite database across container restarts
+      - trump_db:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
   web:
-    build: ./apps/web
-    ports: ["80:80"]
-    depends_on: [api]
+    build:
+      context: ../../apps/web
+      dockerfile: Dockerfile
+    container_name: trump-card-web
+    ports:
+      - "80:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  trump_db:
+    name: trump_card_db_data
