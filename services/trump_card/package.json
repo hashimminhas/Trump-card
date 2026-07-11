@@ -16,7 +16,7 @@
     "start:fast": "cross-env EC_TURN_MS=2500 EC_BOT_MS=300 EC_PAUSE_MS=300 EC_GAP_MS=300 node app/main.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
