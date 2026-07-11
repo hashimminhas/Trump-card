@@ -3,3 +3,7 @@ dist/
 *.db
 *.db-*
 .env
+node_modules/
+services/trump_card/*.db
+services/trump_card/*.db-wal
+services/trump_card/*.db-shm
