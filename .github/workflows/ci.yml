@@ -8,9 +8,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ${{ github.repository }}/trump-card-backend
-  FRONTEND_IMAGE: ${{ github.repository }}/trump-card-frontend
-
+  BACKEND_IMAGE: hashimminhas/trump-card/trump-card-backend
+  FRONTEND_IMAGE: hashimminhas/trump-card/trump-card-frontend
 jobs:
   # ─── Job 1: Test — unchanged from before ───────────────────────────────
   test:
