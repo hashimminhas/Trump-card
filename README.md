@@ -75,6 +75,19 @@ docker compose up --build
 - [Backend](docs/backend.md) - API reference, database schema, environment variables
 - [Multiplayer](docs/multiplayer.md) - room/match architecture, socket events, reconnect, guest mode
 
+
+# Contributing to Trump Card Platform
+ 
+Thank you for your interest in contributing! Here's how to get involved:
+ 
+1. **Read the open Issues** — find one labeled `design`, `good first issue`, or `help wanted` that interests you.
+2. **Fork the repository** — click "Fork" on GitHub to get your own copy, or `git clone` if you've been added as a collaborator.
+3. **Create a new branch** — always branch off `main`: `git checkout -b design/trump-card-redesign` (use a clear, descriptive name).
+4. **Make your changes** — follow the code style in the existing files; for UI work, test on both desktop and mobile before submitting.
+5. **Open a Pull Request** — push your branch and open a PR against `main`; fill in the PR template describing what you changed and why, and attach screenshots or a short screen recording of your UI work.
+6. **Wait for review** — the maintainer will review your PR, may request changes, and will merge it once it meets the quality bar; please respond to feedback within a reasonable time so the PR doesn't go stale.
+ 
+
 ---
 
 ## Roadmap
