@@ -7,3 +7,8 @@ node_modules/
 services/trump_card/*.db
 services/trump_card/*.db-wal
 services/trump_card/*.db-shm
+infra/terraform/.terraform/
+infra/terraform/terraform.tfstate
+infra/terraform/terraform.tfstate.backup
+infra/terraform/terraform.tfvars
+infra/terraform/terraform.exe
