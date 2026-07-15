@@ -100,7 +100,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: services/trump_card
           file: services/trump_card/Dockerfile
@@ -146,7 +146,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: apps/web
           file: apps/web/Dockerfile
