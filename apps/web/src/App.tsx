@@ -15,10 +15,11 @@ import Forgot from './screens/Forgot';
 import Reset from './screens/Reset';
 import NotificationBell from './components/NotificationBell';
 import { Toasts } from './components/ui';
+import React from 'react';
 
 // Hub removed — Play is now the home page
 
-function RequireAuth({ children }: { children: JSX.Element }) {
+function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const loc = useLocation();
   if (loading && !user) return <div className="shell" style={{ minHeight: '100vh' }}><div className="spin">loading…</div></div>;
@@ -26,7 +27,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   return children;
 }
 
-function Shell({ children }: { children: JSX.Element }) {
+function Shell({ children }: { children: React.ReactNode }) {
   const { user, isGuest, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   return (

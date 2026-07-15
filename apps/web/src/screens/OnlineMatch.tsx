@@ -4,6 +4,7 @@ import { getSocket } from '../socket';
 import { useAuth } from '../auth/AuthContext';
 import { Card, CardFace, GLYPH, SUITNAME, isRed, sameCard, toast } from '../components/ui';
 import { mountMatchReview } from '../game/engine';
+import React from 'react';
 
 /* Server snapshot shape (personalized). */
 interface Snap {
@@ -36,7 +37,7 @@ export default function OnlineMatch({ code, spectator, onExit }: {
   const nav = useNavigate();
   const { user, isGuest } = useAuth();
   const [st, setSt] = useState<Snap | null>(null);
-  const [banner, setBanner] = useState<{ html: JSX.Element; gold?: boolean } | null>(null);
+  const [banner, setBanner] = useState<{ html: React.ReactNode; gold?: boolean } | null>(null);
   const [resolved, setResolved] = useState<{ winner: string; winCard: Card } | null>(null);
   const [finished, setFinished] = useState<any>(null);
   const [offline, setOffline] = useState(false);
@@ -56,7 +57,7 @@ export default function OnlineMatch({ code, spectator, onExit }: {
   const pending = useRef(false);
   const bannerT = useRef<any>(null);
 
-  const flash = useCallback((html: JSX.Element, ms = 2200, gold = false) => {
+  const flash = useCallback((html: React.ReactNode, ms = 2200, gold = false) => {
     setBanner({ html, gold });
     clearTimeout(bannerT.current);
     bannerT.current = setTimeout(() => setBanner(null), ms);
