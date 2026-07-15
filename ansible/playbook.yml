@@ -1,0 +1,117 @@
+---
+- name: Configure Trump Card server and deploy the app
+  hosts: trump_card
+  become: true # run tasks as root (sudo) — needed to install packages, manage Docker
+
+  vars:
+    app_dir: /opt/trump-card
+
+  tasks:
+    # ── System prep ──────────────────────────────────────────────────────
+    - name: Update apt package index
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600 # don't re-update if it ran in the last hour
+
+    - name: Install prerequisite packages for Docker's apt repo
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+
+    # ── Install Docker from Docker's official apt repository ────────────
+    # (Deliberately not `curl | sh` — that's fine for a quick manual setup,
+    # but a real Ansible playbook should be idempotent and auditable: this
+    # way, running the playbook a second time changes nothing if Docker is
+    # already installed and up to date, instead of re-running a shell script.)
+    - name: Add Docker's official GPG key + apt repository
+      ansible.builtin.deb822_repository:
+        name: docker
+        types: [deb]
+        uris: "https://download.docker.com/linux/ubuntu"
+        suites: ["{{ ansible_distribution_release }}"]
+        components: [stable]
+        signed_by: "https://download.docker.com/linux/ubuntu/gpg"
+        state: present
+
+    - name: Install Docker Engine + Compose plugin
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Add ubuntu user to the docker group (so it can run docker without sudo)
+      ansible.builtin.user:
+        name: ubuntu
+        groups: docker
+        append: true
+
+    - name: Apply the new group membership without needing a fresh SSH login
+      ansible.builtin.meta: reset_connection
+
+    - name: Ensure Docker service is enabled and running
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    # ── Deploy the app ────────────────────────────────────────────────────
+    - name: Create app directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Copy production docker-compose file
+      ansible.builtin.copy:
+        src: ../infra/docker/docker-compose.prod.yml
+        dest: "{{ app_dir }}/docker-compose.yml"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Write the .env file with the JWT secret
+      ansible.builtin.copy:
+        content: "EC_JWT_SECRET={{ ec_jwt_secret }}\n"
+        dest: "{{ app_dir }}/.env"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0600" # only the owner can read this — it's a real secret
+      no_log: true # don't print the secret into Ansible's console output
+
+    - name: Pull the latest images from ghcr.io
+      ansible.builtin.command: docker compose pull
+      args:
+        chdir: "{{ app_dir }}"
+      become: false # run as ubuntu, not root — ubuntu is now in the docker group
+      changed_when: true
+
+    - name: Start the app (docker compose up -d)
+      ansible.builtin.command: docker compose up -d
+      args:
+        chdir: "{{ app_dir }}"
+      become: false
+      changed_when: true
+
+    - name: Wait for the backend health check to pass
+      ansible.builtin.uri:
+        url: "http://localhost:3001/api/health"
+        status_code: 200
+      register: health_result
+      until: health_result.status == 200
+      retries: 10
+      delay: 3
+
+    - name: Confirm the frontend is serving something
+      ansible.builtin.uri:
+        url: "http://localhost/"
+        status_code: 200
