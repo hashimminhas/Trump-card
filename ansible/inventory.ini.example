@@ -1,0 +1,13 @@
+# Copy this to inventory.ini and fill in the real IP.
+# Get it with: terraform output -raw instance_public_ip  (run from infra/terraform)
+#
+# inventory.ini itself is fine to commit — it has no secrets, just an IP
+# and a path to your PUBLIC key file's PRIVATE counterpart (the path
+# itself isn't sensitive, only the file's actual contents are, and those
+# never leave your machine).
+
+[trump_card]
+13.62.198.38 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/trump-card-aws
+
+[trump_card:vars]
+ansible_python_interpreter=/usr/bin/python3

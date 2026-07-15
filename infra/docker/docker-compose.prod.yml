@@ -1,0 +1,39 @@
+services:
+  api:
+    image: ghcr.io/hashimminhas/trump-card/trump-card-backend:latest
+    container_name: trump-card-api
+    ports:
+      - "3001:3001"
+    environment:
+      - EC_JWT_SECRET=${EC_JWT_SECRET}
+      - EC_DB=/data/trump-card.db
+      - PORT=3001
+      - NODE_ENV=production
+    volumes:
+      - trump_db:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/hashimminhas/trump-card/trump-card-frontend:latest
+    container_name: trump-card-web
+    ports:
+      - "80:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  trump_db:
+    name: trump_card_db_data

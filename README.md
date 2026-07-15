@@ -4,8 +4,9 @@
 
 A custom strategic 4-player card game with full online multiplayer, bots, replays, and statistics. Built with React + Node.js.
 
-Full rules: [docs/game-rules.md](docs/game-rules.md)
-
+- Full rules: [docs/game-rules.md](docs/game-rules.md)
+- [AWS Infrastructure](docs/aws-infrastructure.md) - Terraform-provisioned EC2, security group, static IP
+- [Deployment](docs/ansible-deployment.md) - Ansible-driven Docker deployment from ghcr.io
 ---
 
 ## Features
@@ -75,8 +76,21 @@ docker compose up --build
 - [Backend](docs/backend.md) - API reference, database schema, environment variables
 - [Multiplayer](docs/multiplayer.md) - room/match architecture, socket events, reconnect, guest mode
 
+---
 
-# Contributing to Trump Card Platform
+## Infrastructure & Deployment
+
+Live at **http://13.62.198.38** — deployed to AWS EC2, provisioned entirely
+as code.
+
+- **Terraform** provisions the server, firewall, and static IP —
+  [details](docs/aws-infrastructure.md)
+- **Ansible** installs Docker and deploys the app from pre-built,
+  pre-scanned images on `ghcr.io` — [details](docs/ansible-deployment.md)
+- Both are gated behind the CI pipeline above: nothing gets built or
+  deployed unless all 147 tests pass first
+
+### Contributing to Trump Card Platform
  
 Thank you for your interest in contributing! Here's how to get involved:
  
