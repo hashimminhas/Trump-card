@@ -18,6 +18,7 @@ import {
   legalMoves, trickWinner, botPick, botTrumpChoice, freshMemory
 } from './gameEngine.js';
 import { Matches } from '../database/db.js';
+import { gamesStarted } from '../metrics.js';
 
 const TURN_MS = Number(process.env.EC_TURN_MS || 60000);   // human turn timer
 const BOT_MS = Number(process.env.EC_BOT_MS || 1700);      // bot think time
@@ -41,6 +42,7 @@ export class Match {
    * @param onEnd   callback(roomCode) when the match finishes
    */
   constructor(room, seating, io, onEnd) {
+    gamesStarted.inc();
     this.code = room.code;
     this.io = io;
     this.onEnd = onEnd;

@@ -2,6 +2,7 @@
 import { verifyToken } from '../middleware/auth.js';
 import { Friends, Notifs } from '../database/db.js';
 import { matchFor, matchOfUser } from '../core/match.js';
+import { activeSockets } from '../metrics.js';
 
 /**
  * Phase 3B socket layer.
@@ -66,6 +67,7 @@ export function initSockets(httpServer) {
   });
 
   io.on('connection', (socket) => {
+    activeSockets.inc();
     const { id: userId, username } = socket.user;
     socket.join(`user:${userId}`);
 
@@ -151,6 +153,7 @@ export function initSockets(httpServer) {
 
     /* ---- disconnect ---- */
     socket.on('disconnect', () => {
+      activeSockets.dec();
       const s = sockets.get(userId);
       if (s) { s.delete(socket.id); if (!s.size) sockets.delete(userId); }
       if (!sockets.has(userId)) {

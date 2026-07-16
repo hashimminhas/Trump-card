@@ -11,10 +11,24 @@ import friendRoutes from './routers/friends.js';
 import roomRoutes from './routers/rooms.js';
 import notificationRoutes from './routers/notifications.js';
 import { initSockets } from './websockets/sockets.js';
+import { apiRequests, apiRequestDuration, metricsRegistry } from './metrics.js';  
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '2mb' })); // full match records are ~50–100 KB
+app.use((req, res, next) => {
+  const end = apiRequestDuration.startTimer({ method: req.method, route: req.path });
+  res.on('finish', () => {
+    apiRequests.inc({ method: req.method, route: req.path, status: res.statusCode });
+    end();
+  });
+  next();
+});
+
+app.get('/metrics', async (_req, res) => {
+  res.set('Content-Type', metricsRegistry.contentType);
+  res.send(await metricsRegistry.metrics());
+});
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, phase: '3B' }));
 app.use('/api', authRoutes);
