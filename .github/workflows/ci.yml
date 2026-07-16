@@ -242,9 +242,9 @@ jobs:
 
       - name: Write SSH private key
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/trump-card-aws
-          chmod 600 ~/.ssh/trump-card-aws
+             mkdir -p ~/.ssh
+             echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ~/.ssh/trump-card-aws
+             chmod 600 ~/.ssh/trump-card-aws
 
       - name: Write inventory
         run: |
