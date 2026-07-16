@@ -25,12 +25,13 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/metrics', async (_req, res) => {
+
+
+app.get('/api/health', (_req, res) => res.json({ ok: true, phase: '3B' }));
+app.get('/api/metrics', async (_req, res) => {
   res.set('Content-Type', metricsRegistry.contentType);
   res.send(await metricsRegistry.metrics());
 });
-
-app.get('/api/health', (_req, res) => res.json({ ok: true, phase: '3B' }));
 app.use('/api', authRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', friendRoutes);
@@ -43,7 +44,7 @@ const dist = join(here, '..', '..', '..', 'apps', 'web', 'dist');
 if (existsSync(dist)) {
   app.use(express.static(dist));
   app.get(/^\/(?!api|socket\.io).*/, (_req, res) => res.sendFile(join(dist, 'index.html')));
-}
+}J
 
 app.use((err, _req, res, _next) => {
   console.error(err);
