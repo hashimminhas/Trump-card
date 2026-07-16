@@ -44,7 +44,7 @@ const dist = join(here, '..', '..', '..', 'apps', 'web', 'dist');
 if (existsSync(dist)) {
   app.use(express.static(dist));
   app.get(/^\/(?!api|socket\.io).*/, (_req, res) => res.sendFile(join(dist, 'index.html')));
-}J
+}
 
 app.use((err, _req, res, _next) => {
   console.error(err);
