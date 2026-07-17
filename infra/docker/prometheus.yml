@@ -4,9 +4,9 @@ global:
 scrape_configs:
   - job_name: 'trump-card'
     static_configs:
-      - targets: ['api:3001']
+      - targets: ['13.50.114.92:3001']
     metrics_path: '/api/metrics'
 
   - job_name: 'node'
     static_configs:
-      - targets: ['node-exporter:9100']
+      - targets: ['localhost:9100']
