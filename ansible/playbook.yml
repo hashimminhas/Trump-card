@@ -89,11 +89,13 @@
 
     - name: Write the .env file with the JWT secret
       ansible.builtin.copy:
-        content: "EC_JWT_SECRET={{ ec_jwt_secret }}\n"
+        content: |
+          EC_JWT_SECRET={{ ec_jwt_secret }}
+          GF_ADMIN_PASSWORD={{ gf_admin_password }}
         dest: "{{ app_dir }}/.env"
         owner: ubuntu
         group: ubuntu
-        mode: "0600" # only the owner can read this — it's a real secret
+        mode: "0600"
       no_log: true # don't print the secret into Ansible's console output
 
     - name: Pull the latest images from ghcr.io

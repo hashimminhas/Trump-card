@@ -254,4 +254,4 @@ jobs:
       - name: Run Ansible playbook
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
-            --extra-vars "ec_jwt_secret=${{ secrets.EC_JWT_SECRET }}"
+            --extra-vars "ec_jwt_secret=${{ secrets.EC_JWT_SECRET }} gf_admin_password=${{ secrets.GF_ADMIN_PASSWORD }}"
