@@ -1,80 +1,104 @@
-# Deployment (Ansible)
+# Ansible Deployment
 
-Once [Terraform](aws-infrastructure.md) has provisioned the EC2 instance,
-Ansible configures it and deploys the app — installing Docker and running
-the containers, without ever touching the AWS resources themselves.
+Ansible configures both EC2 instances and keeps them in sync — installing Docker, copying config files, and running containers from pre-built images on `ghcr.io`.
 
 ---
 
-## What the playbook does
+## Two Playbooks
 
-1. Installs Docker Engine from Docker's official apt repository (not a
-   piped shell script) — idempotent, so re-running the playbook is a safe
-   no-op if nothing changed.
-2. Adds the `ubuntu` user to the `docker` group.
-3. Copies `infra/docker/docker-compose.prod.yml` to the server.
-4. Writes a `.env` file containing the JWT secret (permissions locked to
-   the owner only, and never printed to the console via Ansible's own
-   `no_log`).
-5. Pulls the pre-built, pre-tested, pre-scanned images from `ghcr.io` —
-   the server never sees or needs the application source code.
-6. Starts the app with `docker compose up -d`.
-7. Actually waits for and checks the backend's `/api/health` endpoint and
-   the frontend's root page, instead of declaring success the moment the
-   containers start.
-
-Since the container images are public on `ghcr.io`, no registry login step
-is needed — one less credential to manage on the server.
+| Playbook | Target | Purpose |
+|---|---|---|
+| `ansible/playbook.yml` | App server (`13.50.114.92`) | Deploys api + web containers |
+| `ansible/playbook-monitoring.yml` | Monitoring server (`13.50.245.101`) | Deploys Prometheus + Grafana + node-exporter |
 
 ---
 
-## Running it
+## What the app playbook does
 
-Ansible does not run on native Windows — it needs a real Linux environment.
-On Windows, that means WSL:
+1. Installs Docker Engine from Docker's official apt repository (idempotent — safe to re-run)
+2. Adds the `ubuntu` user to the `docker` group
+3. Copies `infra/docker/docker-compose.prod.yml` and `infra/docker/prometheus.yml` to the server
+4. Writes a `.env` file with secrets (locked to owner only, never printed to console)
+5. Pulls pre-built images from `ghcr.io` — the server never needs the source code
+6. Starts containers with `docker compose up -d`
+7. Waits for the backend `/api/health` endpoint and frontend to confirm they're up
 
-```bash
-# inside WSL (Ubuntu)
-cd ansible
-cp inventory.ini.example inventory.ini
-# edit inventory.ini with the real IP from:
-#   terraform output -raw instance_public_ip   (run from infra/terraform, on Windows)
+---
 
-ansible-playbook -i inventory.ini playbook.yml \
-  --extra-vars "ec_jwt_secret=YOUR_REAL_SECRET"
+## CI/CD — automatic deployment
+
+Every push to `main` triggers the full pipeline:
+
+```
+git push → main
+  → tests pass (147 checks)
+  → backend image built + pushed to ghcr.io
+  → frontend image built + pushed to ghcr.io
+  → Trivy security scan
+  → Ansible SSHes into app server
+  → docker compose pull + up -d
+  → health checks pass
+  → live at https://trumpcard.online (~3 minutes)
 ```
 
-Check `PLAY RECAP` at the end — `failed=0` is the bar, not just "it printed
-something."
+The monitoring server is deployed manually (see below) since it doesn't change with every code push.
 
-## Verifying a deploy actually worked
+---
 
-Don't trust the recap alone — confirm from outside the box:
+## Running manually from local (WSL)
+
+Ansible does not run on Windows PowerShell — use WSL:
 
 ```bash
-curl http://<server-ip>/api/health
-ssh -i ~/.ssh/trump-card-aws ubuntu@<server-ip> "docker ps"
+# Inside WSL
+cd "/mnt/c/Users/YourName/Desktop/Trump card"
+
+# Set up inventory
+cp ansible/inventory.ini.example ansible/inventory.ini
+# Edit inventory.ini with real IPs
+
+# Deploy app server
+ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+  --extra-vars "ec_jwt_secret=YOUR_SECRET"
+
+# Deploy monitoring server
+ansible-playbook -i ansible/inventory.ini ansible/playbook-monitoring.yml \
+  --extra-vars "gf_admin_password=YOUR_PASSWORD"
 ```
 
-Both containers should show `Up`, ideally `healthy`.
+---
 
-## Real issues hit and fixed while building this
+## Inventory file structure
 
-- **Ansible cannot run on native Windows PowerShell** — it depends on
-  Unix-only OS features and crashes on startup (`WinError 1: Incorrect
-  function`). WSL is required as the control machine.
-- **`--extra-vars` needs `key=value`**, not a bare value — an easy typo
-  that fails silently with a confusing error otherwise.
-- **SSH private keys must live inside WSL's own filesystem**, not on the
-  Windows-mounted `/mnt/c/` drive — SSH strictly checks file permissions,
-  and Windows-mounted files can't represent them correctly.
-- **`ansible.cfg` gets silently ignored** if the project folder is under
-  `/mnt/c/...` (WSL treats NTFS mounts as world-writable). Use an
-  environment variable (`ANSIBLE_HOST_KEY_CHECKING=False`) instead of
-  relying on the config file for anything security-relevant in that setup.
-- **A container can serve real traffic correctly while Docker reports it
-  `unhealthy`** — our frontend's healthcheck used `wget http://localhost/`
-  *inside* the container, which tried IPv6 (`::1`) first and got
-  `Connection refused` since nginx only bound IPv4. Fixed by pointing the
-  healthcheck at `127.0.0.1` explicitly, sidestepping hostname resolution
-  entirely.
+```ini
+[trump_card]
+13.50.114.92 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/trump-card-aws ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+[monitoring]
+13.50.245.101 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/trump-card-aws ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+```
+
+---
+
+## Verifying a deploy
+
+```bash
+# Check containers are running
+ssh -i ~/.ssh/trump-card-aws ubuntu@13.50.114.92 "docker ps"
+
+# Check app is responding
+curl https://trumpcard.online/api/health
+
+# Check monitoring
+curl http://13.50.245.101:3000   # Grafana
+curl http://13.50.245.101:9090   # Prometheus
+```
+
+---
+
+## Known issues and fixes
+
+- **Ansible won't run on Windows PowerShell** — use WSL (Ubuntu)
+- **SSH keys on `/mnt/c/` fail permission checks** — copy the key inside WSL's own filesystem if needed
+- **`ansible.cfg` is ignored on NTFS mounts** — use `ANSIBLE_HOST_KEY_CHECKING=False` env var instead
+- **After adding HTTPS**, the frontend health check must use `follow_redirects: none` and accept `status_code: [301]` — HTTP now redirects to HTTPS
