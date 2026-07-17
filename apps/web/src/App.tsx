@@ -33,7 +33,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="shell" style={{ minHeight: '100vh' }}>
       <div className="shell-top">
-        <span className="shell-logo">TRUMP<span className="dot" />CARD</span>
+        <span className="shell-logo">TRUMP<span className="dojjt" />CARD</span>
         <button
           className={`hamburger${menuOpen ? ' open' : ''}`}
           aria-label="Toggle menu"

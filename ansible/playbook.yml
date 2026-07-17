@@ -79,6 +79,14 @@
         group: ubuntu
         mode: "0644"
 
+    - name: Copy Prometheus config    
+      ansible.builtin.copy:
+        src: ../infra/docker/prometheus.yml
+        dest: "{{ app_dir }}/prometheus.yml"
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
     - name: Write the .env file with the JWT secret
       ansible.builtin.copy:
         content: "EC_JWT_SECRET={{ ec_jwt_secret }}\n"

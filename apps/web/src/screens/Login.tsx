@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+﻿import { FormEvent, useState } from 'react';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
@@ -27,9 +27,9 @@ export default function Login() {
     finally { setBusy(false); }
   }
   return (
-    <div className="shell"><div className="auth-wrap">
+    <div className="shell shell-login"><div className="auth-wrap">
       <form className="auth-card" onSubmit={submit}>
-        <h1>ELECTR<span style={{color:'var(--charge)'}}>O</span>N CARD</h1>
+        <h1>TRUMP <span style={{color:'var(--charge)'}}>CARD</span></h1>
         <div className="sub">Sign in to sync matches, friends, and rooms</div>
         {roomInvite && <div className="invite-note">You've been invited to room <b className="mono">{roomInvite}</b> - sign in or jump straight in as a guest.</div>}
         <div className="field"><label>USERNAME OR EMAIL</label>
@@ -39,7 +39,7 @@ export default function Login() {
         <div className="form-error">{err}</div>
         <button className="btn btn-primary" style={{width:'100%'}} disabled={busy}>{busy?'Signing in…':'Sign in'}</button>
         <button type="button" className="btn btn-guest" disabled={busy} onClick={playAsGuest}>
-          ⚡ Play as Guest<small>play instantly - no account required</small></button>
+           Play as Guest</button>
         <div className="auth-alt">New here? <Link to="/register" state={loc.state}>Create an account</Link></div>
         <div className="auth-alt"><Link to="/forgot">Forgot password?</Link></div>
       </form>

@@ -293,7 +293,9 @@ function goHome(){
   if(opts._reviewRecord){onExit&&onExit();return;}
   show('screen-home');renderHomeStats();
 }
-function quitMatch(){if(confirm('Quit this match? It will not be saved.'))goHome();}
+function quitMatch(){$('quit-overlay').classList.add('show');}
+function hideQuitConfirm(){$('quit-overlay').classList.remove('show');}
+function confirmQuit(){hideQuitConfirm();goHome();}
 function showRules(){show('screen-game');$('rules-overlay').classList.add('show');$('rules-overlay').dataset.fromHome='1';}
 function hideRules(){$('rules-overlay').classList.remove('show');if($('rules-overlay').dataset.fromHome==='1'){$('rules-overlay').dataset.fromHome='';goHome();}}
 function renderHomeStats(){
@@ -1049,7 +1051,7 @@ async function rpPlay(){
   renderHomeStats();
 })();
 /* ---- module wiring (Phase 3A) ---- */
-Object.assign(window, { startMatch, showHistory, showStats, showRules, hideRules, goHome, quitMatch });
+Object.assign(window, { startMatch, showHistory, showStats, showRules, hideRules, goHome, quitMatch, hideQuitConfirm, confirmQuit });
 // btn-exit-account removed from template — Other Game and Private Room buttons handle navigation
 if (opts._reviewRecord) {
   /* Review mode: change "Play again" to a close button, seed cloud history, show the record */

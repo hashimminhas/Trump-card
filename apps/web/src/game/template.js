@@ -112,6 +112,16 @@ export const TEMPLATE = `
           <p><b style="color:var(--charge)">5 · KHOTI.</b> A team wins only by banking all 52 cards. Any other split - even 48 to 4 - is a draw. Cards stranded in the pile at the end belong to no one.</p>
         </div>
         <div style="text-align:center;margin-top:20px;"><button class="btn btn-primary" onclick="hideRules()">Got it</button></div>
+      </div>  
+    </div>
+    <div class="overlay" id="quit-overlay">
+      <div class="panel" style="max-width:380px;">
+        <h2>Quit this match?</h2>
+        <div class="sub">It will not be saved.</div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:8px;">
+          <button class="btn btn-ghost" onclick="hideQuitConfirm()">Cancel</button>
+          <button class="btn btn-primary" onclick="confirmQuit()">OK</button>
+        </div>
       </div>
     </div>
   </div>
