@@ -46,7 +46,7 @@ export default function Play() {
     <div className="shell" style={{ minHeight: '100vh' }}>
       {!inGame && (
         <div className="shell-top">
-          <span className="shell-logo">TRUMP<span className="dot" />CARD</span>
+          <span className="shell-logo"> <span style={{color:'var(--charge)'}}>TRUMP</span> CARD</span>
           <button
             className={`hamburger${menuOpen ? ' open' : ''}`}
             aria-label="Toggle menu"
@@ -55,7 +55,7 @@ export default function Play() {
             <span /><span /><span />
           </button>
           <nav className={`shell-nav${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
-            <NavLink to="/" end>Home</NavLink>
+            <NavLink to="/" end onClick={() => (window as any).goHome?.()}>Home</NavLink>
             <NavLink to="/other-games">Other Games</NavLink>
             {!isGuest && <NavLink to="/profile">Profile</NavLink>}
             {!isGuest && <NavLink to="/friends">Friends</NavLink>}

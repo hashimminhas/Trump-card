@@ -3,8 +3,32 @@
 
 .shell {
   min-height: 100vh;
-  background: radial-gradient(ellipse 90% 70% at 50% 20%, var(--table-felt) 0%, var(--table-deep) 70%);
-  display: flex; flex-direction: column;
+
+  background:
+    linear-gradient(
+      rgba(5,10,25,0.55),
+      rgba(5,10,25,0.70)
+    ),
+    url('./assets/2.png');
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  display: flex;
+  flex-direction: column;
+}
+.shell-login {
+  background:
+    linear-gradient(
+      rgba(5,10,25,0.55),
+      rgba(5,10,25,0.70)
+    ),
+    url('./assets/login-bg.png');
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 .shell-top {
   display: flex; align-items: center; gap: 14px;
@@ -31,12 +55,41 @@
 .shell-main h2 { font-family: var(--display); font-weight: 700; font-size: 19px; margin: 26px 0 12px; }
 
 /* auth card */
-.auth-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.auth-wrap {
+  flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px;
+  position: relative; overflow: hidden;
+}
+.auth-wrap::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  width: 340px; height: 340px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(79,182,201,.28) 0%, transparent 70%);
+  transform: translate(-260px, -220px);
+  filter: blur(40px);
+  pointer-events: none;
+}
+.auth-wrap::after {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(242,179,61,.24) 0%, transparent 70%);
+  transform: translate(140px, 160px);
+  filter: blur(40px);
+  pointer-events: none;
+}
 .auth-card {
-  width: 100%; max-width: 380px;
-  background: linear-gradient(160deg, #1E2538, #161C2B);
-  border: 1px solid rgba(255,255,255,.1); border-radius: 20px;
-  padding: 30px 28px; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  position: relative; z-index: 1;
+  width: 100%;
+  max-width: 380px;
+  background: rgba(10,18,40,.35);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 20px;
+  padding: 30px 28px;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.08);
 }
 .auth-card h1 { font-family: var(--display); font-weight: 800; font-size: 26px; text-align: center; }
 .auth-card .sub { color: var(--ink-dim); font-size: 13px; text-align: center; margin: 6px 0 22px; }
@@ -153,13 +206,27 @@
 
 /* ============ PHASE 3C - GUEST MODE ============ */
 .btn-guest {
-  width: 100%; margin-top: 10px;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  background: rgba(242,179,61,.08); border: 1px solid rgba(242,179,61,.55);
-  color: var(--charge); font-weight: 700; padding: 11px 16px; border-radius: 12px;
-  box-shadow: 0 0 18px rgba(242,179,61,.12), inset 0 0 14px rgba(242,179,61,.05);
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255,255,255,.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(242,179,61,.35);
+  color: var(--charge);
+  font-weight: 700;
+  padding: 11px 16px;
+  border-radius: 12px;
+  box-shadow:
+    0 0 20px rgba(242,179,61,.08),
+    inset 0 1px 0 rgba(255,255,255,.06);
+
   transition: all .16s;
 }
+
 .btn-guest:hover { background: rgba(242,179,61,.15); box-shadow: 0 0 26px rgba(242,179,61,.25); transform: translateY(-1px); }
 .btn-guest small { font-size: 10.5px; font-weight: 500; color: var(--ink-dim); letter-spacing: .04em; }
 
