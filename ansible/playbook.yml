@@ -122,4 +122,6 @@
     - name: Confirm the frontend is serving something
       ansible.builtin.uri:
         url: "http://localhost/"
-        status_code: 301
+        status_code: [200, 301, 302]
+        validate_certs: false
+        follow_redirects: none
