@@ -43,11 +43,11 @@ resource "aws_security_group" "app" {
   description = "Trump Card app server - SSH restricted to my IP, HTTP/HTTPS open to everyone"
 
   ingress {
-    description = "SSH - only from my own IP"
+    description = "SSH - open to all, key auth protects the server"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.my_ip_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
