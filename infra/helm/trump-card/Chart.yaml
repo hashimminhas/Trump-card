@@ -1,0 +1,7 @@
+
+apiVersion: v2
+name: trump-card
+description: Trump Card multiplayer card game
+type: application
+version: 1.2.1
+appVersion: "1.2.1"

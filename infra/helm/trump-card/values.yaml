@@ -1,0 +1,17 @@
+backend:
+  image: ghcr.io/hashimminhas/trump-card/trump-card-backend
+  tag: latest
+  replicas: 1
+  port: 3001
+
+frontend:
+  image: ghcr.io/hashimminhas/trump-card/trump-card-frontend
+  tag: latest
+  replicas: 1
+  port: 80
+
+secret:
+  jwtSecret: "change-me-before-deploy"
+
+service:
+  frontendType: NodePort

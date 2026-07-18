@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trump-card-api
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trump-card-api
+  template:
+    metadata:
+      labels:
+        app: trump-card-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/hashimminhas/trump-card/trump-card-backend:latest
+          ports:
+            - containerPort: 3001
+          env:
+            - name: PORT
+              value: "3001"
+            - name: NODE_ENV
+              value: "production"
+            - name: EC_DB
+              value: "/data/trump-card.db"
+            - name: EC_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: trump-card-secret
+                  key: jwt-secret
+          volumeMounts:
+            - name: db-storage
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: db-storage
+          emptyDir: {}
