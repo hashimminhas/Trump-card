@@ -41,33 +41,40 @@ export const TEMPLATE = `
 <!-- ================= GAME ================= -->
 <div class="screen" id="screen-game">
   <div class="hud">
-    <span class="chip hud-trump"><span class="dim" style="font-size:10px;letter-spacing:.1em;">TRUMP</span> <span class="glyph" id="hud-trump-g">-</span></span>
-    <span class="chip mono" id="hud-round" style="font-size:12px;">R 0/13</span>
-    <div class="round-track" id="round-track"></div>
-    <div class="hud-spacer"></div>
-    <span class="chip khoti-chip live" id="khoti-chip">KHOTI LIVE</span>
-    <span class="meter ac"><span class="shape">▲</span>AC <span class="bar"><span class="fill" id="bar-ac" style="width:0%"></span></span><span class="mono" id="cnt-ac">0</span></span>
-    <span class="meter bd"><span class="shape">●</span>BD <span class="bar"><span class="fill" id="bar-bd" style="width:0%"></span></span><span class="mono" id="cnt-bd">0</span></span>
-    <button class="btn btn-ghost btn-sm" onclick="quitMatch()">Quit</button>
+    <div class="hud-row1">
+      <span class="chip hud-trump"><span class="dim" style="font-size:10px;letter-spacing:.1em;">TRUMP</span> <span class="glyph" id="hud-trump-g">-</span></span>
+      <span class="chip mono" id="hud-round" style="font-size:12px;">R 0/13</span>
+      <div class="round-track" id="round-track"></div>
+      <div class="hud-spacer"></div>
+      <span class="chip khoti-chip live" id="khoti-chip">KHOTI LIVE</span>
+      <span class="meter ac"><span class="shape">▲</span>AC <span class="bar"><span class="fill" id="bar-ac" style="width:0%"></span></span><span class="mono" id="cnt-ac">0</span></span>
+      <span class="meter bd"><span class="shape">●</span>BD <span class="bar"><span class="fill" id="bar-bd" style="width:0%"></span></span><span class="mono" id="cnt-bd">0</span></span>
+      <button class="btn btn-ghost btn-sm" onclick="quitMatch()">Quit</button>
+    </div>
+    <div class="hud-row2">
+      <span class="hud-team-score ac"><span class="shape">▲</span> AC <span class="mono" id="m-cnt-ac">0</span></span>
+      <span class="hud-row2-dot">·</span>
+      <span class="hud-team-score bd"><span class="shape">●</span> BD <span class="mono" id="m-cnt-bd">0</span></span>
+    </div>
   </div>
   <div class="table-wrap">
     <div class="table-oval"></div>
     <div class="seat seat-C team-ac" id="seat-C">
       <div class="thinking"><span></span><span></span><span></span></div>
       <div class="avatar">C<div class="senior-badge">⚡</div><div class="timer-ring"></div></div>
-      <div class="label">C · partner <span class="tag" id="tag-C" style="display:none;"></span></div>
+      <div class="label">partner <span class="tag" id="tag-C" style="display:none;"></span></div>
       <div class="cards-left" id="cl-C"></div>
     </div>
     <div class="seat seat-B team-bd" id="seat-B">
       <div class="thinking"><span></span><span></span><span></span></div>
       <div class="avatar">B<div class="senior-badge">⚡</div><div class="timer-ring"></div></div>
-      <div class="label">B <span class="tag" id="tag-B" style="display:none;"></span></div>
+      <div class="label"><span class="tag" id="tag-B" style="display:none;"></span></div>
       <div class="cards-left" id="cl-B"></div>
     </div>
     <div class="seat seat-D team-bd" id="seat-D">
       <div class="thinking"><span></span><span></span><span></span></div>
       <div class="avatar">D<div class="senior-badge">⚡</div><div class="timer-ring"></div></div>
-      <div class="label">D <span class="tag" id="tag-D" style="display:none;"></span></div>
+      <div class="label"><span class="tag" id="tag-D" style="display:none;"></span></div>
       <div class="cards-left" id="cl-D"></div>
     </div>
     <div class="seat seat-A team-ac" id="seat-A">

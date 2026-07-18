@@ -333,6 +333,9 @@ function renderHUD(){
   $('cnt-ac').textContent=ac;$('cnt-bd').textContent=bd;
   $('bar-ac').style.width=(ac/52*100)+'%';
   $('bar-bd').style.width=(bd/52*100)+'%';
+  // mobile row2 scores
+  const mac=$('m-cnt-ac'),mbd=$('m-cnt-bd');
+  if(mac)mac.textContent=ac;if(mbd)mbd.textContent=bd;
   const kc=$('khoti-chip');
   if(ac>0&&bd>0){kc.className='chip khoti-chip dead';kc.textContent='KHOTI OFF';}
   else{kc.className='chip khoti-chip live';kc.textContent='KHOTI LIVE';}
@@ -360,9 +363,7 @@ function renderSeats(){
     $('cl-'+s)&&($('cl-'+s).textContent=G.hands[s].length?G.hands[s].length+' cards':'');
     const tag=$('tag-'+s);
     if(tag){
-      if(G.dealer===s&&G.chooser===s){tag.style.display='';tag.className='tag tc';tag.textContent='DEALER · TC';}
-      else if(G.dealer===s){tag.style.display='';tag.className='tag';tag.textContent='DEALER';}
-      else if(G.chooser===s){tag.style.display='';tag.className='tag tc';tag.textContent='TRUMP CHOOSER';}
+      if(G.dealer===s){tag.style.display='';tag.className='tag';tag.textContent='DEALER';}
       else tag.style.display='none';
     }
   }
@@ -374,14 +375,7 @@ function renderHand(interactive=false,legal=[]){
   const h=$('hand');h.innerHTML='';kbCards=[];kbIdx=-1;
   const hand=[...G.hands.A].sort((a,b)=>SUITS.indexOf(a.suit)-SUITS.indexOf(b.suit)||b.rank-a.rank);
   hand.forEach((c,i)=>{
-  const el=cardEl(c);
-  const total = hand.length;
-  const center = (total - 1) / 2;
-
-  const offset = i - center;
-
-  el.style.transform =
-  `translateY(${Math.abs(offset) * 5}px) rotate(${offset * 4.9}deg)`;
+    const el=cardEl(c);
     el.classList.add('deal-in');el.style.animationDelay=(i*0.03)+'s';
     if(interactive){
       const ok=legal.some(l=>sameCard(l,c));
