@@ -118,6 +118,7 @@ resource "aws_security_group" "monitoring" {
   description = "launch-wizard-1 created 2026-07-17T05:22:17.378Z"
 
   ingress {
+    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
