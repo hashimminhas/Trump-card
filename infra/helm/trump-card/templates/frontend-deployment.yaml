@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-web
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-web
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-web
+    spec:
+      containers:
+        - name: web
+          image: {{ .Values.frontend.image }}:{{ .Values.frontend.tag }}
+          ports:
+            - containerPort: {{ .Values.frontend.port }}
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.frontend.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.frontend.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-local-config

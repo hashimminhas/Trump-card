@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+    spec:
+      containers:
+        - name: api
+          image: {{ .Values.backend.image }}:{{ .Values.backend.tag }}
+          ports:
+            - containerPort: {{ .Values.backend.port }}
+          env:
+            - name: PORT
+              value: {{ .Values.backend.port | quote }}
+            - name: NODE_ENV
+              value: "production"
+            - name: EC_DB
+              value: "/data/trump-card.db"
+            - name: EC_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: jwt-secret
+          volumeMounts:
+            - name: db-storage
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: db-storage
+          emptyDir: {}
