@@ -10,7 +10,7 @@
 13.50.114.92 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/trump-card-aws
 
 [monitoring]
-13.50.245.101 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/trump-card-aws ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+51.21.14.132 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/trump-card-aws ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 [trump_card:vars]
 ansible_python_interpreter=/usr/bin/python3

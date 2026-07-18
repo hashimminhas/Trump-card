@@ -374,7 +374,14 @@ function renderHand(interactive=false,legal=[]){
   const h=$('hand');h.innerHTML='';kbCards=[];kbIdx=-1;
   const hand=[...G.hands.A].sort((a,b)=>SUITS.indexOf(a.suit)-SUITS.indexOf(b.suit)||b.rank-a.rank);
   hand.forEach((c,i)=>{
-    const el=cardEl(c);
+  const el=cardEl(c);
+  const total = hand.length;
+  const center = (total - 1) / 2;
+
+  const offset = i - center;
+
+  el.style.transform =
+  `translateY(${Math.abs(offset) * 5}px) rotate(${offset * 4.9}deg)`;
     el.classList.add('deal-in');el.style.animationDelay=(i*0.03)+'s';
     if(interactive){
       const ok=legal.some(l=>sameCard(l,c));

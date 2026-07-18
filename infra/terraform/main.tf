@@ -113,3 +113,104 @@ resource "aws_eip" "app" {
     Project = var.project_name
   }
 }
+resource "aws_security_group" "monitoring" {
+  name        = "launch-wizard-1"
+  description = "launch-wizard-1 created 2026-07-17T05:22:17.378Z"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Backend API direct"
+    from_port   = 3001
+    to_port     = 3001
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "node-exporter - monitoring server only"
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["51.21.14.132/32"]
+  }
+
+  tags = {
+    Name    = "trump-card-monitoring"
+    Project = "trump-card"
+  }
+}
+
+resource "aws_instance" "monitoring" {
+  ami                    = "ami-0aba19e56f3eaec05"
+  instance_type          = var.instance_type
+  key_name               = aws_key_pair.deployer.key_name
+  vpc_security_group_ids = [aws_security_group.monitoring.id]
+
+  root_block_device {
+    volume_size = 8
+    volume_type = "gp3"
+  }
+
+  tags = {
+    Name    = "trump-card-monitoring"
+    Project = "trump-card"
+  }
+}
+
+resource "aws_eip" "monitoring" {
+  instance = aws_instance.monitoring.id
+  domain   = "vpc"
+
+  tags = {
+    Name    = "trump-card-monitoring-eip"
+    Project = "trump-card"
+  }
+}
+
+
+
+output "monitoring_public_ip" {
+  value = aws_eip.monitoring.public_ip
+}
+
