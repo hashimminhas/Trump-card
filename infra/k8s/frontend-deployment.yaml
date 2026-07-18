@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trump-card-web
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trump-card-web
+  template:
+    metadata:
+      labels:
+        app: trump-card-web
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/hashimminhas/trump-card/trump-card-frontend:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-local-config
