@@ -151,6 +151,16 @@ export function initSockets(httpServer) {
       roomBroadcast(code, 'chat_message', { user: username, userId, text, ts: now });
     });
 
+    /* ---- match leave: player voluntarily exits — aborts the whole match ---- */
+    socket.on('match:leave', (data) => {
+      const code = String(data?.code || '').toUpperCase();
+      const m = matchFor(code);
+      if (!m) return;
+      const seat = m.userSeat(userId);
+      if (!seat) return; // spectators can just disconnect, not abort
+      m.abort(`${seat} left the match`);
+    });
+
     /* ---- disconnect ---- */
     socket.on('disconnect', () => {
       activeSockets.dec();

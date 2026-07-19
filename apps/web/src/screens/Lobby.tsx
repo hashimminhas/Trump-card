@@ -5,6 +5,7 @@ import { getSocket } from '../socket';
 import { useAuth } from '../auth/AuthContext';
 import { toast } from '../components/ui';
 import OnlineMatch from './OnlineMatch';
+import { Shell } from '../components/Shell';
 
 const SEATS = ['A', 'C', 'B', 'D'];
 const SEAT_TEAM: Record<string, 'AC' | 'BD'> = { A: 'AC', C: 'AC', B: 'BD', D: 'BD' };
@@ -78,8 +79,8 @@ export default function Lobby() {
       onExit={() => { setInMatch(false); setSpectating(false); refresh(); }} />;
   }
 
-  if (err) return <div className="shell-main"><h1>Lobby</h1><div className="form-error">{err}</div></div>;
-  if (!room) return <div className="shell-main"><div className="spin">loading…</div></div>;
+  if (err) return <Shell><div className="shell-main"><h1>Lobby</h1><div className="form-error">{err}</div></div></Shell>;
+  if (!room) return <Shell><div className="shell-main"><div className="spin">loading…</div></div></Shell>;
 
   const me = room.players.find(p => p.userId === user?.id);
   const isHost = room.hostId === user?.id;
@@ -124,6 +125,7 @@ export default function Lobby() {
   };
 
   return (
+    <Shell>
     <div className="shell-main">
       <h1 style={{ textAlign: 'center' }}>Lobby</h1>
       <div className="lobby-code">{room.code}</div>
@@ -186,5 +188,6 @@ export default function Lobby() {
         </div>
       )}
     </div>
+    </Shell>
   );
 }

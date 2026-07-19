@@ -171,7 +171,6 @@ export default function OnlineMatch({ code, spectator, onExit }: {
   if (!st) return <div className="screen show" style={{ alignItems: 'center', justifyContent: 'center' }}><div className="spin">syncing with table…</div></div>;
 
   const anchor = st.mySeat || 'A';
-  const posOf = (seat: string) => SEATS[(SEATS.indexOf(seat) - SEATS.indexOf(anchor) + 4) % 4];
   const seatAt = (pos: string) => SEATS[(SEATS.indexOf(pos) + SEATS.indexOf(anchor)) % 4];
 
   const play = (c: Card) => {
@@ -191,26 +190,6 @@ export default function OnlineMatch({ code, spectator, onExit }: {
   const myTurn = !spectator && st.phase === 'play' && st.turn === st.mySeat;
   const secsLeft = st.turnDeadline ? Math.max(0, Math.ceil((st.turnDeadline - now) / 1000)) : null;
 
-  const seatChip = (pos: 'A' | 'B' | 'C' | 'D') => {
-    const seat = seatAt(pos);
-    const p = st.players[seat];
-    const isMe = seat === st.mySeat;
-    return (
-      <div className={`seat seat-${pos} team-${TEAM(seat).toLowerCase()} ${st.senior === seat ? 'senior' : ''} ${st.turn === seat ? 'active' : ''}`} key={pos}>
-        <div className="avatar" style={{ opacity: p.connected ? 1 : .45 }}>
-          {seat}<div className="senior-badge">⚡</div>
-        </div>
-        <div className="label">
-          {isMe ? 'You' : p.username}{p.bot ? ' 🤖' : ''}
-          {st.dealer === seat && <span className="tag">DEALER</span>}
-          {st.chooser === seat && <span className="tag tc">TC</span>}
-          {!p.connected && !p.bot && <span className="tag" style={{ color: 'var(--danger)' }}>OFFLINE</span>}
-        </div>
-        <div className="cards-left">{st.handCounts[seat] ? st.handCounts[seat] + ' cards' : ''}</div>
-      </div>
-    );
-  };
-
   const trickCardAt = (pos: string) => {
     const seat = seatAt(pos);
     const t = st.trick.find(x => x.seat === seat);
@@ -223,185 +202,231 @@ export default function OnlineMatch({ code, spectator, onExit }: {
 
   return (
     <>
-    <div className="screen show" id="screen-game" style={{ top: 56 }}>
-      {/* HUD */}
+    <div className="screen show" id="screen-game">
+      {/* HUD — matches template.js structure exactly so game.css responsive rules apply */}
       <div className="hud">
-        <span className="chip hud-trump"><span className="dim" style={{ fontSize: 10, letterSpacing: '.1em' }}>TRUMP </span>
-          <span className="glyph" style={{ color: st.trump ? (isRed(st.trump) ? 'var(--suit-red)' : '#D9DCE6') : undefined }}>
-            {st.trump ? GLYPH[st.trump] : '-'}</span></span>
-        <span className="chip mono" style={{ fontSize: 12 }}>R {st.round}/13</span>
-        <div className="round-track">
-          {Array.from({ length: 13 }, (_, i) => {
-            const r = i + 1;
-            const col = st.collections.find(c => c.round === r);
-            let cls = 'seg-r';
-            if (col) cls += col.team === 'AC' ? ' col-ac' : ' col-bd';
-            else if (r < st.round) cls += ' done';
-            else if (r === st.round) cls += ' cur';
-            return <span key={r} className={cls} />;
-          })}
+        {/* ROW 1: TRUMP | round chip + track | [desktop: khoti + meters] | Leave */}
+        <div className="hud-row1">
+          <span className="chip hud-trump">
+            <span className="dim" style={{ fontSize: 10, letterSpacing: '.1em' }}>TRUMP </span>
+            <span className="glyph" style={{ color: st.trump ? (isRed(st.trump) ? 'var(--suit-red)' : '#D9DCE6') : undefined }}>
+              {st.trump ? GLYPH[st.trump] : '-'}
+            </span>
+          </span>
+          <span className="chip mono" style={{ fontSize: 11, padding: '3px 9px' }}>R {st.round}/13</span>
+          <div className="round-track">
+            {Array.from({ length: 13 }, (_, i) => {
+              const r = i + 1;
+              const col = st.collections.find(c => c.round === r);
+              let cls = 'seg-r';
+              if (col) cls += col.team === 'AC' ? ' col-ac' : ' col-bd';
+              else if (r < st.round) cls += ' done';
+              else if (r === st.round) cls += ' cur';
+              return <span key={r} className={cls} />;
+            })}
+          </div>
+          <div className="hud-spacer" />
+          {/* Desktop only: khoti + score meters */}
+          <span id="khoti-chip" className={`chip khoti-chip ${st.banks.AC > 0 && st.banks.BD > 0 ? 'dead' : 'live'}`}>
+            {st.banks.AC > 0 && st.banks.BD > 0 ? 'KHOTI OFF' : 'KHOTI LIVE'}
+          </span>
+          <span className="meter ac"><span className="shape">▲</span>AC <span className="bar">
+            <span className="fill" style={{ width: `${st.banks.AC / 52 * 100}%` }} /></span>
+            <span className="mono">{st.banks.AC}</span>
+          </span>
+          <span className="meter bd"><span className="shape">●</span>BD <span className="bar">
+            <span className="fill" style={{ width: `${st.banks.BD / 52 * 100}%` }} /></span>
+            <span className="mono">{st.banks.BD}</span>
+          </span>
+          {/* Leave: visible on all sizes — emits match:leave which aborts match for all */}
+          <button className="btn btn-ghost btn-sm leave-btn" onClick={() => {
+            if (spectator) { onExit(); return; }
+            getSocket()?.emit('match:leave', { code });
+            onExit();
+          }}>
+            {spectator ? 'Stop' : 'Leave'}
+          </button>
         </div>
-        <span className="chip mono" style={{ fontSize: 11 }}>{code}</span>
-        {spectator && <span className="chip" style={{ color: 'var(--charge)' }}>👁 SPECTATING</span>}
-        <div className="hud-spacer" />
-        <span className={`chip khoti-chip ${st.banks.AC > 0 && st.banks.BD > 0 ? 'dead' : 'live'}`}>
-          {st.banks.AC > 0 && st.banks.BD > 0 ? 'KHOTI OFF' : 'KHOTI LIVE'}</span>
-        <span className="meter ac"><span className="shape">▲</span>AC <span className="bar">
-          <span className="fill" style={{ width: `${st.banks.AC / 52 * 100}%` }} /></span>
-          <span className="mono">{st.banks.AC}</span></span>
-        <span className="meter bd"><span className="shape">●</span>BD <span className="bar">
-          <span className="fill" style={{ width: `${st.banks.BD / 52 * 100}%` }} /></span>
-          <span className="mono">{st.banks.BD}</span></span>
-        <button className="btn btn-ghost btn-sm chat-toggle-btn" onClick={() => setChatOpen(o => !o)}>
-          💬{unread > 0 && <span className="chat-badge">{unread}</span>}
-        </button>
-        <button className="btn btn-ghost btn-sm" onClick={onExit}>{spectator ? 'Stop watching' : 'Leave table'}</button>
+
+        {/* ROW 2 (mobile/tablet only): chat(left) | AC · BD (center) | spacer */}
+        <div className="hud-row2">
+          <button className="btn btn-ghost btn-sm chat-toggle-btn hud-chat-btn" onClick={() => setChatOpen(o => !o)}>
+            💬{unread > 0 && <span className="chat-badge">{unread}</span>}
+          </button>
+          <div className="hud-row2-scores">
+            <span className="hud-team-score ac"><span className="shape">▲</span> AC <span className="mono">{st.banks.AC}</span></span>
+            <span className="hud-row2-dot">·</span>
+            <span className="hud-team-score bd"><span className="shape">●</span> BD <span className="mono">{st.banks.BD}</span></span>
+          </div>
+          <span style={{ width: 36 }} />{/* balance the chat button width */}
+        </div>
       </div>
 
-      {/* Table + Chat side-by-side */}
-      <div className="mp-content">
-        <div className="table-wrap">
-          <div className="table-oval" />
-          {(['A', 'B', 'C', 'D'] as const).map(seatChip)}
+      {/* Table — direct child of #screen-game, same as local game */}
+      <div className="table-wrap">
+        <div className="table-oval" />
 
-          <div className={`pile-core ${st.round >= 3 && st.phase === 'play' ? 'live' : ''}`}
-            style={{ boxShadow: st.pile ? `0 0 ${10 + st.pile * 2.2}px rgba(242,179,61,${Math.min(.12 + st.pile * .022, .65)})` : 'none' }}>
-            <div className="pc-trump">
-              <span className="g" style={{ color: st.trump ? (isRed(st.trump) ? 'var(--suit-red)' : '#D9DCE6') : undefined }}>
-                {st.trump ? GLYPH[st.trump] : '-'}</span>
-              <span>{st.trump ? SUITNAME[st.trump] : ''}</span>
+        {/* Seats */}
+        {(['A', 'B', 'C', 'D'] as const).map(pos => {
+          const seat = seatAt(pos);
+          const p = st.players[seat];
+          const isMe = seat === st.mySeat;
+          return (
+            <div className={`seat seat-${pos} team-${TEAM(seat).toLowerCase()} ${st.senior === seat ? 'senior' : ''} ${st.turn === seat ? 'active' : ''}`} key={pos}>
+              <div className="thinking"><span /><span /><span /></div>
+              <div className="avatar" style={{ opacity: p.connected ? 1 : .45 }}>
+                {seat}<div className="senior-badge">⚡</div>
+              </div>
+              <div className="label">
+                {isMe ? 'You' : p.username}{p.bot ? ' 🤖' : ''}
+                {st.dealer === seat && <span className="tag">DEALER</span>}
+                {!p.connected && !p.bot && <span className="tag" style={{ color: 'var(--danger)' }}>OFFLINE</span>}
+              </div>
+              <div className="cards-left">{st.handCounts[seat] ? st.handCounts[seat] + ' cards' : ''}</div>
             </div>
-            <div className="pc-round">{st.round > 0 ? `Round ${st.round} / 13` : 'Round - / 13'}</div>
-            <div className="pc-senior">Senior: {st.senior ? (st.senior === st.mySeat ? 'You' : st.senior) : '-'}</div>
-            <div className="pc-pile"><span className="count">{st.pile}</span><span className="plabel">PILE</span></div>
-            <div className="pc-status">
-              {st.phase === 'trump' ? `${st.chooser === st.mySeat ? 'You choose' : st.chooser + ' chooses'} trump…`
-                : myTurn ? `Your turn${secsLeft !== null ? ` · ${secsLeft}s` : ''}`
-                : st.turn ? `${st.turn === st.mySeat ? 'You' : st.players[st.turn].bot ? st.turn + ' (bot)' : st.turn} to play${st.turnDeadline && secsLeft !== null ? ` · ${secsLeft}s` : ''}`
-                : ''}
-            </div>
+          );
+        })}
+
+        {/* Pile */}
+        <div className={`pile-core ${st.round >= 3 && st.phase === 'play' ? 'live' : ''}`}
+          style={{ boxShadow: st.pile ? `0 0 ${10 + st.pile * 2.2}px rgba(242,179,61,${Math.min(.12 + st.pile * .022, .65)})` : 'none' }}>
+          <div className="pc-trump">
+            <span className="g" style={{ color: st.trump ? (isRed(st.trump) ? 'var(--suit-red)' : '#D9DCE6') : undefined }}>
+              {st.trump ? GLYPH[st.trump] : '-'}
+            </span>
+            <span>{st.trump ? SUITNAME[st.trump] : ''}</span>
           </div>
-
-          {(['A', 'B', 'C', 'D'] as const).map(pos =>
-            <div className={`trick-slot slot-${pos}`} key={'slot' + pos}>{trickCardAt(pos)}</div>)}
-
-          {banner && <div className={`banner show ${banner.gold ? 'collect' : ''}`}>{banner.html}</div>}
-
-          {!spectator && (
-            <div className="hand">
-              {hand.map((c, i) => {
-                const ok = myTurn && st.legal?.some(l => sameCard(l, c));
-                const locked = st.aceLock === st.mySeat && c.rank === 14 && st.trick.length === 0 && st.round < 11;
-                return (
-                  <div key={c.suit + c.rank} style={{ position: 'relative' }}>
-                    <CardFace card={c} trump={st.trump}
-                      className={`deal-in ${myTurn ? (ok ? 'legal lifted' : 'illegal') : ''}`}
-                      style={{ animationDelay: `${i * 0.02}s`, margin: '0 -16px' }}
-                      onClick={() => ok && play(c)} />
-                    {myTurn && !ok && locked && <span className="ace-lock">LOCK</span>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {st.amChooser && st.phase === 'trump' && (
-            <div className="overlay show">
-              <div className="panel">
-                <h2>Choose the trump suit</h2>
-                <div className="sub">Decide from your first five cards · {secsLeft !== null ? `${secsLeft}s` : ''}</div>
-                <div className="ts-cards">
-                  {(st.chooserCards || []).map(c => <CardFace key={c.suit + c.rank} card={c} style={{ margin: '0 -10px' }} />)}
-                </div>
-                <div className="suit-row">
-                  {SUIT_ORDER.map(s => (
-                    <button key={s} className={`suit-btn ${isRed(s) ? 'red' : 'blk'}`} onClick={() => chooseTrump(s)}>
-                      <span className="g">{GLYPH[s]}</span>
-                      <span className="n">{(st.chooserCards || []).filter(c => c.suit === s).length} in hand</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {offline && (
-            <div className="overlay show">
-              <div className="panel">
-                <h2>Connection lost</h2>
-                <div className="sub">Reconnecting… your seat is reserved and the match continues.<br />
-                  If you miss your turn, the table plays your lowest legal card.</div>
-                <div className="spin">⟳</div>
-              </div>
-            </div>
-          )}
-
-          {finished && (
-            <div className="overlay show">
-              <div className="panel">
-                <h2 className={finished.result !== 'DRAW' ? 'mp-khoti' : ''}>
-                  {finished.result === 'DRAW' ? 'DRAW' : `KHOTI - TEAM ${finished.result === 'KHOTI_AC' ? 'AC' : 'BD'}`}
-                </h2>
-                <div className="sub">AC {finished.score.AC} – {finished.score.BD} BD
-                  {finished.score.stranded ? ` · ${finished.score.stranded} stranded` : ''}</div>
-                <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginTop: 20 }}>
-                  <button className="btn btn-primary" onClick={() => setShowReview(true)}>View report &amp; replay</button>
-                  <button className="btn btn-ghost" onClick={onExit}>Back to lobby</button>
-                  <button className="btn btn-ghost" onClick={() => nav('/')}>Home</button>
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="pc-round">{st.round > 0 ? `Round ${st.round} / 13` : 'Round - / 13'}</div>
+          <div className="pc-senior">Senior: {st.senior ? (st.senior === st.mySeat ? 'You' : st.senior) : '-'}</div>
+          <div className="pc-pile"><span className="count">{st.pile}</span><span className="plabel">PILE</span></div>
+          <div className="pc-status">
+            {st.phase === 'trump'
+              ? `${st.chooser === st.mySeat ? 'You choose' : st.chooser + ' chooses'} trump…`
+              : myTurn
+                ? `Your turn${secsLeft !== null ? ` · ${secsLeft}s` : ''}`
+                : st.turn
+                  ? `${st.players[st.turn]?.bot ? st.turn + ' (bot)' : st.turn} to play${st.turnDeadline && secsLeft !== null ? ` · ${secsLeft}s` : ''}`
+                  : ''}
+          </div>
         </div>
 
-        {/* Chat panel */}
-        {chatOpen && (
-          <div className="chat-panel">
-            <div className="chat-head">
-              <span>Room chat</span>
-              <button className="btn btn-ghost btn-sm" onClick={() => setChatOpen(false)}>✕</button>
-            </div>
-            <div className="chat-messages">
-              {chat.length === 0 && <div className="chat-empty">No messages yet</div>}
-              {chat.map((m, i) => (
-                <div key={i} className={`chat-msg ${m.userId === user?.id ? 'mine' : ''}`}>
-                  {m.userId !== user?.id && <span className="chat-who">{m.user}</span>}
-                  <span className="chat-text">{m.text}</span>
-                </div>
-              ))}
-              <div ref={chatScrollRef} />
-            </div>
-            {!spectator && (
-              <div className="chat-input-row">
-                <input
-                  ref={chatInputRef}
-                  className="chat-input"
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
-                  placeholder="Type a message…"
-                  maxLength={300}
-                />
-                <button className="btn btn-primary btn-sm" onClick={sendChat}>↵</button>
+        {/* Trick slots */}
+        {(['A', 'B', 'C', 'D'] as const).map(pos =>
+          <div className={`trick-slot slot-${pos}`} key={'slot' + pos}>{trickCardAt(pos)}</div>
+        )}
+
+        {/* Banner */}
+        {banner && <div className={`banner show ${banner.gold ? 'collect' : ''}`}>{banner.html}</div>}
+
+        {/* Hand — NO wrapper divs so .hand .card CSS nth-child fan rules apply directly */}
+        {!spectator && (
+          <div className="hand">
+            {hand.map((c, i) => {
+              const ok = myTurn && st.legal?.some(l => sameCard(l, c));
+              const locked = st.aceLock === st.mySeat && c.rank === 14 && st.trick.length === 0 && st.round < 11;
+              return (
+                <CardFace key={c.suit + c.rank} card={c} trump={st.trump}
+                  className={`deal-in ${myTurn && ok ? 'legal' : myTurn && !ok ? 'illegal' : ''}`}
+                  style={{ animationDelay: `${i * 0.02}s` }}
+                  onClick={() => ok && play(c)} />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Trump chooser overlay */}
+        {st.amChooser && st.phase === 'trump' && (
+          <div className="overlay show">
+            <div className="panel">
+              <h2>Choose the trump suit</h2>
+              <div className="sub">Decide from your first five cards · {secsLeft !== null ? `${secsLeft}s` : ''}</div>
+              <div className="ts-cards">
+                {(st.chooserCards || []).map(c => <CardFace key={c.suit + c.rank} card={c} style={{ margin: '0 -10px' }} />)}
               </div>
-            )}
+              <div className="suit-row">
+                {SUIT_ORDER.map(s => (
+                  <button key={s} className={`suit-btn ${isRed(s) ? 'red' : 'blk'}`} onClick={() => chooseTrump(s)}>
+                    <span className="g">{GLYPH[s]}</span>
+                    <span className="n">{(st.chooserCards || []).filter(c => c.suit === s).length} in hand</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Offline overlay */}
+        {offline && (
+          <div className="overlay show">
+            <div className="panel">
+              <h2>Connection lost</h2>
+              <div className="sub">Reconnecting… your seat is reserved and the match continues.<br />
+                If you miss your turn, the table plays your lowest legal card.</div>
+              <div className="spin">⟳</div>
+            </div>
+          </div>
+        )}
+
+        {/* Match finished overlay */}
+        {finished && (
+          <div className="overlay show">
+            <div className="panel">
+              <h2 className={finished.result !== 'DRAW' ? 'mp-khoti' : ''}>
+                {finished.result === 'DRAW' ? 'DRAW' : `KHOTI - TEAM ${finished.result === 'KHOTI_AC' ? 'AC' : 'BD'}`}
+              </h2>
+              <div className="sub">AC {finished.score.AC} – {finished.score.BD} BD
+                {finished.score.stranded ? ` · ${finished.score.stranded} stranded` : ''}</div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginTop: 20 }}>
+                <button className="btn btn-primary" onClick={() => setShowReview(true)}>View report &amp; replay</button>
+                <button className="btn btn-ghost" onClick={onExit}>Back to lobby</button>
+                <button className="btn btn-ghost" onClick={() => nav('/')}>Home</button>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-    </div>
-
-      {/*
-        Review overlay lives OUTSIDE #screen-game.
-        #screen-game has no z-index (auto), this div has z-index:100 →
-        it paints above both the game screen and the sticky navbar (z-index:20).
-        The engine's position:fixed screens inside paint within this stacking context.
-      */}
-      {showReview && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100 }}>
-          <div ref={reviewRef} style={{ width: '100%', height: '100%' }} />
+      {/* Chat — floating overlay panel so it doesn't affect table layout */}
+      {chatOpen && (
+        <div className="chat-panel">
+          <div className="chat-head">
+            <span>Room chat</span>
+            <button className="btn btn-ghost btn-sm" onClick={() => setChatOpen(false)}>✕</button>
+          </div>
+          <div className="chat-messages">
+            {chat.length === 0 && <div className="chat-empty">No messages yet</div>}
+            {chat.map((m, i) => (
+              <div key={i} className={`chat-msg ${m.userId === user?.id ? 'mine' : ''}`}>
+                {m.userId !== user?.id && <span className="chat-who">{m.user}</span>}
+                <span className="chat-text">{m.text}</span>
+              </div>
+            ))}
+            <div ref={chatScrollRef} />
+          </div>
+          {!spectator && (
+            <div className="chat-input-row">
+              <input
+                ref={chatInputRef}
+                className="chat-input"
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
+                placeholder="Type a message…"
+                maxLength={300}
+              />
+              <button className="btn btn-primary btn-sm" onClick={sendChat}>↵</button>
+            </div>
+          )}
         </div>
       )}
+    </div>
+
+    {/* Review overlay outside #screen-game so z-index:100 wins */}
+    {showReview && (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 100 }}>
+        <div ref={reviewRef} style={{ width: '100%', height: '100%' }} />
+      </div>
+    )}
     </>
   );
 }
