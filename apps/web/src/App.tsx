@@ -1,5 +1,4 @@
-import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import Login from './screens/Login';
 import Register from './screens/Register';
@@ -13,8 +12,8 @@ import OtherGames from './screens/OtherGames';
 import Upgrade from './screens/Upgrade';
 import Forgot from './screens/Forgot';
 import Reset from './screens/Reset';
-import NotificationBell from './components/NotificationBell';
 import { Toasts } from './components/ui';
+import { Shell } from './components/Shell';
 import React from 'react';
 
 // Hub removed — Play is now the home page
@@ -25,40 +24,6 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   if (loading && !user) return <div className="shell" style={{ minHeight: '100vh' }}><div className="spin">loading…</div></div>;
   if (!user) return <Navigate to="/login" state={{ from: loc }} replace />;
   return children;
-}
-
-function Shell({ children }: { children: React.ReactNode }) {
-  const { user, isGuest, logout } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  return (
-    <div className="shell" style={{ minHeight: '100vh' }}>
-      <div className="shell-top">
-        <span className="shell-logo">TRUMP<span className="dojjt" />CARD</span>
-        <button
-          className={`hamburger${menuOpen ? ' open' : ''}`}
-          aria-label="Toggle menu"
-          onClick={() => setMenuOpen(o => !o)}
-        >
-          <span /><span /><span />
-        </button>
-        <nav className={`shell-nav${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
-          {/* Home = Play page */}
-          <NavLink to="/" end>Home</NavLink>
-          <NavLink to="/other-games">Other Games</NavLink>
-          {!isGuest && <NavLink to="/profile">Profile</NavLink>}
-          {!isGuest && <NavLink to="/friends">Friends</NavLink>}
-          <NavLink to="/rooms">Private Room</NavLink>
-        </nav>
-        <span className="shell-spacer" />
-        {isGuest
-          ? <NavLink to="/upgrade" className="btn btn-sm btn-upgrade">Create account</NavLink>
-          : <NotificationBell />}
-        <span className="shell-user">{user?.username}{isGuest ? ' (guest)' : ''}</span>
-        <button className="btn btn-ghost btn-sm" onClick={logout}>{isGuest ? 'Exit guest' : 'Log out'}</button>
-      </div>
-      {children}
-    </div>
-  );
 }
 
 export default function App() {
@@ -84,8 +49,9 @@ export default function App() {
         <Route path="/profile/:username"  element={<RequireAuth><Shell><Profile /></Shell></RequireAuth>} />
         <Route path="/friends"            element={<RequireAuth><Shell><Friends /></Shell></RequireAuth>} />
         <Route path="/rooms"              element={<RequireAuth><Shell><Rooms /></Shell></RequireAuth>} />
-        <Route path="/room/:code"         element={<RequireAuth><Shell><Lobby /></Shell></RequireAuth>} />
-        <Route path="/lobby/:code"        element={<RequireAuth><Shell><Lobby /></Shell></RequireAuth>} />
+        {/* Room lobby has its own shell built-in (hidden once a match is in progress, like Play) */}
+        <Route path="/room/:code"         element={<RequireAuth><Lobby /></RequireAuth>} />
+        <Route path="/lobby/:code"        element={<RequireAuth><Lobby /></RequireAuth>} />
         <Route path="*"                   element={<Navigate to="/" replace />} />
       </Routes>
       <Toasts />
