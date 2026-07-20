@@ -44,6 +44,15 @@ spec:
               port: {{ .Values.backend.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+              
       volumes:
         - name: db-storage
           emptyDir: {}
