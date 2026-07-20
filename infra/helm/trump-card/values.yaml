@@ -14,4 +14,4 @@ secret:
   jwtSecret: "change-me-before-deploy"
 
 service:
-  frontendType: NodePort
+  frontendType: LoadBalancer
