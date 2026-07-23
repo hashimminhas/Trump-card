@@ -1,4 +1,4 @@
-name: Backend Tests + Build
+name: CI/CD Pipeline
 
 on:
   push:
@@ -10,15 +10,54 @@ env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: hashimminhas/trump-card/trump-card-backend
   FRONTEND_IMAGE: hashimminhas/trump-card/trump-card-frontend
+
 jobs:
-  # ─── Job 1: Test — unchanged from before ───────────────────────────────
-  test:
-    name: Run all test suites (Node 22)
+
+  # ─── Job 1: Lint ─────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Type Check
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: |
+            services/trump_card/package-lock.json
+            apps/web/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: services/trump_card
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Lint backend
+        working-directory: services/trump_card
+        run: npm run lint --if-present
+
+      - name: Lint frontend
+        working-directory: apps/web
+        run: npm run lint --if-present
+
+      - name: Type check frontend
+        working-directory: apps/web
+        run: npx tsc --noEmit
+
+  # ─── Job 2: Test ─────────────────────────────────────────────────────────
+  test:
+    name: Run all test suites (Node 22)
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -35,7 +74,7 @@ jobs:
         working-directory: services/trump_card
         run: node --test tests/banking.test.js tests/engine.test.js
 
-      - name: Start backend (short timers for fast tests)
+      - name: Start backend
         working-directory: services/trump_card
         run: |
           EC_DB=$(pwd)/ci-test.db \
@@ -59,12 +98,12 @@ jobs:
         working-directory: services/trump_card
         run: node tests/social.test.js
 
-      - name: Dump server log if any test step failed
+      - name: Dump server log if failed
         if: failure()
         working-directory: services/trump_card
         run: cat server.log || true
 
-  # ─── Job 2: Build & push backend image — only runs after tests pass ───
+  # ─── Job 3a: Build backend ────────────────────────────────────────────────
   build-backend:
     name: Build & Push Backend Image
     runs-on: ubuntu-latest
@@ -75,11 +114,13 @@ jobs:
       contents: read
       packages: write
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
 
-      - name: Log in to GitHub Container Registry
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -110,7 +151,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─── Job 3: Build & push frontend image — runs in parallel with backend ─
+  # ─── Job 3b: Build frontend ───────────────────────────────────────────────
   build-frontend:
     name: Build & Push Frontend Image
     runs-on: ubuntu-latest
@@ -121,11 +162,13 @@ jobs:
       contents: read
       packages: write
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
 
-      - name: Log in to GitHub Container Registry
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -156,7 +199,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─── Job 4: Trivy security scan — after both images exist ─────────────
+  # ─── Job 4: Trivy security scan ──────────────────────────────────────────
   scan:
     name: Trivy Security Scan
     runs-on: ubuntu-latest
@@ -168,7 +211,9 @@ jobs:
       security-events: write
 
     steps:
-      - name: Log in to GitHub Container Registry
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -205,13 +250,6 @@ jobs:
           sarif_file: "trivy-frontend.sarif"
           category: "frontend"
 
-      # ── IaC/config scan — checks the Dockerfiles themselves for
-      # misconfigurations (missing USER, exposed secrets in ENV, etc.),
-      # not the built images. Different failure mode than the image scans
-      # above: this catches mistakes before you even build.
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Scan Dockerfiles for misconfigurations
         uses: aquasecurity/trivy-action@master
         with:
@@ -228,7 +266,8 @@ jobs:
           sarif_file: "trivy-config.sarif"
           category: "iac-config"
 
-  deploy:
+  # ─── Job 5a: Deploy to EC2 ───────────────────────────────────────────────
+  deploy-ec2:
     name: Deploy to EC2 via Ansible
     runs-on: ubuntu-latest
     needs: [build-backend, build-frontend]
@@ -242,9 +281,9 @@ jobs:
 
       - name: Write SSH private key
         run: |
-             mkdir -p ~/.ssh
-             echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ~/.ssh/trump-card-aws
-             chmod 600 ~/.ssh/trump-card-aws
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ~/.ssh/trump-card-aws
+          chmod 600 ~/.ssh/trump-card-aws
 
       - name: Write inventory
         run: |
@@ -255,9 +294,10 @@ jobs:
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
             --extra-vars "ec_jwt_secret=${{ secrets.EC_JWT_SECRET }} gf_admin_password=${{ secrets.GF_ADMIN_PASSWORD }}"
-  
+
+  # ─── Job 5b: Deploy to EKS ───────────────────────────────────────────────
   deploy-eks:
-    name: Deploy to EKS
+    name: Deploy to EKS via Helm
     runs-on: ubuntu-latest
     needs: [build-backend, build-frontend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -281,4 +321,6 @@ jobs:
       - name: Deploy to EKS
         run: |
           helm upgrade trump-card infra/helm/trump-card \
-            --set secret.jwtSecret=${{ secrets.EC_JWT_SECRET }}
+            --set secret.jwtSecret=${{ secrets.EC_JWT_SECRET }} \
+            --set backend.tag=sha-${{ github.sha }} \
+            --set frontend.tag=sha-${{ github.sha }}

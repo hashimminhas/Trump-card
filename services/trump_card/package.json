@@ -13,7 +13,8 @@
     "test:banking": "node --test tests/banking.test.js",
     "test:engine": "node --test tests/engine.test.js",
     "test:rooms": "cross-env EC_TURN_MS=2500 EC_BOT_MS=300 EC_PAUSE_MS=300 EC_GAP_MS=300 node tests/rooms.test.js",
-    "start:fast": "cross-env EC_TURN_MS=2500 EC_BOT_MS=300 EC_PAUSE_MS=300 EC_GAP_MS=300 node app/main.js"
+    "start:fast": "cross-env EC_TURN_MS=2500 EC_BOT_MS=300 EC_PAUSE_MS=300 EC_GAP_MS=300 node app/main.js",
+    "lint": "eslint app/**/*.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "cross-env": "^10.1.0",
+    "eslint": "^8.57.1",
     "socket.io-client": "^4.8.3"
   }
 }
