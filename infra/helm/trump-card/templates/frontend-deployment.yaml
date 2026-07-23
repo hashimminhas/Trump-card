@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: web
-          image: {{ .Values.frontend.image }}:{{ .Values.frontend.tag }}
+          image: {{ .Values.frontend.image }}:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: {{ .Values.frontend.port }}
           volumeMounts:

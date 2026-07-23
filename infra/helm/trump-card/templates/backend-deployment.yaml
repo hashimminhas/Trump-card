@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: api
-          image: {{ .Values.backend.image }}:{{ .Values.backend.tag }}
+          image: {{ .Values.backend.image }}:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: {{ .Values.backend.port }}
           env:
