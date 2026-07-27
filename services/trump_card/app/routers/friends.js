@@ -1,56 +1,75 @@
 import { Router } from 'express';
-import { Users, Friends } from '../database/db.js';
-import { requireAuth, rejectGuests } from '../middleware/auth.js';
-import { presenceOf, notifyUser, pushNotification } from '../websockets/sockets.js';
+import { requireAuth } from '../middleware/auth.js';
+import { stmts } from '../database/db.js';
 
 const r = Router();
 r.use(requireAuth);
 
-r.get('/friends', rejectGuests, (req, res) => {
-  const me = req.user.id;
-  const friends = Friends.listAccepted.all({ me }).map(f => ({
-    ...f, status: presenceOf(f.user_id)
-  }));
-  res.json({
-    friends,
-    incoming: Friends.listIncoming.all(me),
-    outgoing: Friends.listOutgoing.all(me)
-  });
-});
-
-r.post('/friends/request', rejectGuests, (req, res) => {
-  const target = Users.byUsername.get(String(req.body?.username || ''));
-  if (!target) return res.status(404).json({ error: 'No such user.' });
-  if (target.id === req.user.id) return res.status(400).json({ error: "You can't befriend yourself." });
-  const existing = Friends.between.get({ a: req.user.id, b: target.id });
-  if (existing) {
-    return res.status(409).json({
-      error: existing.status === 'accepted' ? 'Already friends.' : 'A request already exists between you.'
-    });
+/* ── GET /api/friends ── */
+r.get('/friends', async (req, res) => {
+  try {
+    const friends = await stmts.Friendships.list.all(req.user.id);
+    const pending = await stmts.Friendships.pending.all(req.user.id);
+    res.json({ friends, pending });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
   }
-  Friends.create.run(req.user.id, target.id);
-  notifyUser(target.id, 'friends_changed', {});
-  pushNotification(target.id, 'friend_request', { from: req.user.username });
-  res.json({ ok: true });
 });
 
-r.post('/friends/accept', rejectGuests, (req, res) => {
-  const f = Friends.byId.get(req.body?.id | 0);
-  if (!f || f.addressee_id !== req.user.id || f.status !== 'pending')
-    return res.status(404).json({ error: 'No such pending request.' });
-  Friends.accept.run(f.id, req.user.id);
-  notifyUser(f.requester_id, 'friends_changed', {});
-  pushNotification(f.requester_id, 'friend_accepted', { from: req.user.username });
-  res.json({ ok: true });
+/* ── POST /api/friends/request ── */
+r.post('/friends/request', async (req, res) => {
+  const { username } = req.body ?? {};
+  if (!username) return res.status(400).json({ error: 'username required.' });
+  try {
+    const target = await stmts.Users.byUsername.get(username);
+    if (!target) return res.status(404).json({ error: 'User not found.' });
+    if (target.id === req.user.id) return res.status(400).json({ error: 'Cannot friend yourself.' });
+
+    const existing = await stmts.Friendships.between.get(req.user.id, target.id);
+    if (existing) return res.status(409).json({ error: 'Request already exists.' });
+
+    await stmts.Friendships.create.run(req.user.id, target.id);
+    await stmts.Notifications.create.run(
+      target.id, 'friend_request',
+      JSON.stringify({ from: req.user.id, username: req.user.username })
+    );
+    res.status(201).json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
-r.delete('/friends/:id', rejectGuests, (req, res) => {
-  const f = Friends.byId.get(req.params.id | 0);
-  if (!f) return res.status(404).json({ error: 'Not found.' });
-  const info = Friends.remove.run(f.id, req.user.id, req.user.id);
-  if (!info.changes) return res.status(403).json({ error: 'Not yours to remove.' });
-  notifyUser(f.requester_id === req.user.id ? f.addressee_id : f.requester_id, 'friends_changed', {});
-  res.json({ ok: true });
+/* ── POST /api/friends/accept ── */
+r.post('/friends/accept', async (req, res) => {
+  const { id } = req.body ?? {};
+  if (!id) return res.status(400).json({ error: 'id required.' });
+  try {
+    const friendship = await stmts.Friendships.between.get(req.user.id, id);
+    if (!friendship || friendship.addressee_id !== req.user.id)
+      return res.status(403).json({ error: 'Not authorized.' });
+    await stmts.Friendships.accept.run(friendship.id);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── DELETE /api/friends/:id ── */
+r.delete('/friends/:id', async (req, res) => {
+  try {
+    const friendship = await stmts.Friendships.between.get(req.user.id, parseInt(req.params.id));
+    if (!friendship) return res.status(404).json({ error: 'Friendship not found.' });
+    if (friendship.requester_id !== req.user.id && friendship.addressee_id !== req.user.id)
+      return res.status(403).json({ error: 'Not authorized.' });
+    await stmts.Friendships.remove.run(friendship.id);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 export default r;

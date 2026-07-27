@@ -1,116 +1,121 @@
 import { Router } from 'express';
-import { Users, Matches } from '../database/db.js';
-import { requireAuth, rejectGuests } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
+import { stmts } from '../database/db.js';
 
 const r = Router();
 
-function statsFor(userId) {
-  const s = Matches.stats.get(userId) || {};
-  const fav = Matches.favoriteTrump.get(userId);
-  const matches = s.matches || 0;
-  return {
-    matches,
-    khoti: s.khoti || 0,
-    myWins: s.my_wins || 0,
-    draws: s.draws || 0,
-    winPct: matches ? Math.round(((s.my_wins || 0) / matches) * 100) : 0,
-    favoriteTrump: fav ? fav.trump : null,
-    largestCollection: s.largest_collection || 0,
-    totalCollections: s.total_collections || 0,
-    avgDurationMs: s.avg_duration ? Math.round(s.avg_duration) : null
-  };
-}
-
-/* Own profile */
-r.get('/profile', requireAuth, (req, res) => {
-  const user = Users.byId.get(req.user.id);
-  res.json({ user, stats: statsFor(req.user.id) });
-});
-
-/* Public profile by username */
-r.get('/profile/:username', requireAuth, (req, res) => {
-  const u = Users.byUsername.get(req.params.username);
-  if (!u) return res.status(404).json({ error: 'No such user.' });
-  res.json({
-    user: { id: u.id, username: u.username, created_at: u.created_at },
-    stats: statsFor(u.id)
-  });
-});
-
-/* User search (for friends) */
-r.get('/users/search', requireAuth, (req, res) => {
-  const q = String(req.query.q || '').trim();
-  if (q.length < 2) return res.json({ users: [] });
-  const users = Users.search.all(`%${q}%`).filter(u => u.id !== req.user.id);
-  res.json({ users });
-});
-
-/* ---------- Cloud save ---------- */
-
-/* Lightweight history list */
-r.get('/match-history', requireAuth, (req, res) => {
-  res.json({ matches: Matches.listByUser.all(req.user.id) });
-});
-
-/* Full records (the game seeds its local cache from this) */
-r.get('/match-history/full', requireAuth, (req, res) => {
-  const rows = Matches.fullByUser.all(req.user.id);
-  res.json({ records: rows.map(x => JSON.parse(x.data)) });
-});
-
-/* Save one completed match record (idempotent on client_id) */
-r.post('/matches', requireAuth, rejectGuests, (req, res) => {
-  const rec = req.body;
-  if (!rec || !rec.id || !rec.result || !rec.score || !Array.isArray(rec.rounds))
-    return res.status(400).json({ error: 'Malformed match record.' });
-  const cols = Array.isArray(rec.collections) ? rec.collections : [];
-  Matches.insert.run({
-    user_id: req.user.id,
-    client_id: String(rec.id),
-    result: String(rec.result),
-    score_ac: rec.score.AC | 0,
-    score_bd: rec.score.BD | 0,
-    stranded: rec.score.stranded | 0,
-    trump: String(rec.trump || '?'),
-    largest_collection: cols.length ? Math.max(...cols.map(c => c.cards | 0)) : 0,
-    collections_count: cols.length,
-    duration_ms: rec.durationMs ?? null,
-    difficulty: rec.difficulty ?? null,
-    played_at: rec.date || new Date().toISOString(),
-    data: JSON.stringify(rec),
-    mode: rec.mode === 'online' ? 'online' : 'solo',
-    room_code: rec.roomCode || null
-  });
-  res.json({ ok: true });
-});
-
-/* Bulk import (one-time sync of pre-account localStorage history) */
-r.post('/matches/import', requireAuth, rejectGuests, (req, res) => {
-  const records = Array.isArray(req.body?.records) ? req.body.records : [];
-  let saved = 0;
-  for (const rec of records.slice(0, 500)) {
-    if (!rec?.id || !rec?.result || !rec?.score || !Array.isArray(rec?.rounds)) continue;
-    const cols = Array.isArray(rec.collections) ? rec.collections : [];
-    const info = Matches.insert.run({
-      user_id: req.user.id,
-      client_id: String(rec.id),
-      result: String(rec.result),
-      score_ac: rec.score.AC | 0,
-      score_bd: rec.score.BD | 0,
-      stranded: rec.score.stranded | 0,
-      trump: String(rec.trump || '?'),
-      largest_collection: cols.length ? Math.max(...cols.map(c => c.cards | 0)) : 0,
-      collections_count: cols.length,
-      duration_ms: rec.durationMs ?? null,
-      difficulty: rec.difficulty ?? null,
-      played_at: rec.date || new Date().toISOString(),
-      data: JSON.stringify(rec),
-      mode: rec.mode === 'online' ? 'online' : 'solo',
-      room_code: rec.roomCode || null
-    });
-    saved += info.changes;
+/* ── GET /api/profile ── own profile */
+r.get('/profile', requireAuth, async (req, res) => {
+  try {
+    const user = await stmts.Users.byId.get(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const { password_hash, reset_token, reset_expires, ...pub } = user;
+    res.json({ user: pub });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
   }
-  res.json({ ok: true, saved });
+});
+
+/* ── GET /api/profile/:username ── public profile */
+r.get('/profile/:username', requireAuth, async (req, res) => {
+  try {
+    const user = await stmts.Users.byUsername.get(req.params.username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const { password_hash, reset_token, reset_expires, email, ...pub } = user;
+    res.json({ user: pub });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── GET /api/users/search?q= ── */
+r.get('/users/search', requireAuth, async (req, res) => {
+  const q = (req.query.q ?? '').trim();
+  if (!q) return res.json({ users: [] });
+  try {
+    const users = await stmts.Users.search.all(`%${q}%`, req.user.id);
+    res.json({ users: users.map(u => ({ id: u.id, username: u.username })) });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── GET /api/match-history ── paginated */
+r.get('/match-history', requireAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+  const offset = parseInt(req.query.offset) || 0;
+  try {
+    const matches = await stmts.Matches.byUser.all(req.user.id, limit, offset);
+    const total = await stmts.Matches.countByUser.get(req.user.id);
+    res.json({ matches, total: total?.count ?? 0 });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── GET /api/match-history/full ── all matches, no pagination */
+r.get('/match-history/full', requireAuth, async (req, res) => {
+  try {
+    const matches = await stmts.Matches.byUser.all(req.user.id, 10000, 0);
+    res.json({ matches });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/matches ── save a single match */
+r.post('/matches', requireAuth, async (req, res) => {
+  const m = req.body;
+  if (!m?.id) return res.status(400).json({ error: 'match id required.' });
+  try {
+    const exists = await stmts.Matches.byClientId.get(req.user.id, m.id);
+    if (exists) return res.json({ ok: true, duplicate: true });
+    await stmts.Matches.insert.run(
+      req.user.id, m.id, m.result, m.score_ac, m.score_bd,
+      m.stranded ? 1 : 0, m.trump,
+      m.largest_collection ?? 0, m.collections_count ?? 0,
+      m.duration_ms ?? null, m.difficulty ?? null,
+      m.played_at ?? new Date().toISOString(),
+      JSON.stringify(m), m.mode ?? 'solo', m.room_code ?? null
+    );
+    res.status(201).json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/matches/import ── bulk import */
+r.post('/matches/import', requireAuth, async (req, res) => {
+  const { records } = req.body ?? {};
+  if (!Array.isArray(records)) return res.status(400).json({ error: 'records array required.' });
+  let imported = 0;
+  let skipped = 0;
+  try {
+    for (const m of records) {
+      if (!m?.id) { skipped++; continue; }
+      const exists = await stmts.Matches.byClientId.get(req.user.id, m.id);
+      if (exists) { skipped++; continue; }
+      await stmts.Matches.insert.run(
+        req.user.id, m.id, m.result, m.score_ac, m.score_bd,
+        m.stranded ? 1 : 0, m.trump,
+        m.largest_collection ?? 0, m.collections_count ?? 0,
+        m.duration_ms ?? null, m.difficulty ?? null,
+        m.played_at ?? new Date().toISOString(),
+        JSON.stringify(m), m.mode ?? 'solo', m.room_code ?? null
+      );
+      imported++;
+    }
+    res.json({ ok: true, imported, skipped });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 export default r;

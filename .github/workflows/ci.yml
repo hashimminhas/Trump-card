@@ -321,6 +321,6 @@ jobs:
       - name: Deploy to EKS
         run: |
           helm upgrade trump-card infra/helm/trump-card \
-            --set secret.jwtSecret=${{ secrets.EC_JWT_SECRET }} \
-            --set backend.tag=sha-${{ github.sha }} \
-            --set frontend.tag=sha-${{ github.sha }}
+            --set secret.jwtSecret=${{ secrets.EC_JWT_SECRET }}
+          kubectl rollout restart deployment/trump-card-api
+          kubectl rollout restart deployment/trump-card-web

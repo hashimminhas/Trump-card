@@ -1,229 +1,312 @@
 ﻿import { Router } from 'express';
-import { tx, Rooms, Users } from '../database/db.js';
 import { requireAuth } from '../middleware/auth.js';
-import { roomBroadcast, notifyUser, pushNotification, getIO } from '../websockets/sockets.js';
-import { Match, matchFor } from '../core/match.js';
-import { SEATS } from '../core/gameEngine.js';
+import { stmts } from '../database/db.js';
 
 const r = Router();
 r.use(requireAuth);
 
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-function newCode() {
-  let c = '';
-  for (let i = 0; i < 6; i++) c += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-  return c;
+function randomCode() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
-const SEAT_ORDER = ['A', 'C', 'B', 'D'];
-const botsOf = room => { try { return JSON.parse(room.bots || '{}'); } catch { return {}; } };
 
-export function roomState(room) {
-  const players = Rooms.players.all(room.id);
-  const bots = botsOf(room);
+function formatRoom(room, players) {
   return {
-    code: room.code,
-    status: room.status,
-    locked: !!room.locked,
-    hostId: room.host_id,
-    players: players.map(p => ({
-      userId: p.user_id, username: p.username, seat: p.seat,
-      ready: !!p.ready, isHost: p.user_id === room.host_id, guest: !!p.is_guest
-    })),
-    bots,
-    inMatch: !!matchFor(room.code)
+    room: {
+      id: room.id,
+      code: room.code,
+      status: room.status,
+      locked: room.locked,
+      bots: typeof room.bots === 'string' ? JSON.parse(room.bots || '{}') : (room.bots ?? {}),
+      hostId: room.host_id,
+      createdAt: room.created_at,
+      players: players.map(p => ({
+        userId: p.user_id,
+        username: p.username,
+        seat: p.seat,
+        ready: !!p.ready,
+        joinedAt: p.joined_at,
+      })),
+    }
   };
 }
-const sync = room => roomBroadcast(room.code, 'room_state', roomState(room));
 
-function leaveCurrentRoom(userId) {
-  const cur = Rooms.anyRoomOf.get(userId);
-  if (!cur) return;
-  if (cur.status === 'playing') return; // can't leave a live match's room record (seat reserved)
-  Rooms.removePlayer.run(cur.id, userId);
-  const left = Rooms.players.all(cur.id);
-  if (!left.length) Rooms.close.run(cur.id);
-  else if (cur.host_id === userId) Rooms.setHost.run(left[0].user_id, cur.id);
-  const fresh = Rooms.byCode.get(cur.code);
-  if (fresh && fresh.status !== 'closed') { sync(fresh); roomBroadcast(cur.code, 'room_left', { userId }); }
+function takenSeats(players, bots) {
+  return new Set([
+    ...players.map(p => p.seat),
+    ...Object.keys(bots),
+  ]);
 }
 
-/* ---------- create / join / leave / get ---------- */
-r.post('/room/create', (req, res) => {
-  leaveCurrentRoom(req.user.id);
-  const code = tx(() => {
-    let c; for (;;) { c = newCode(); if (!Rooms.byCode.get(c)) break; }
-    const info = Rooms.create.run(c, req.user.id);
-    Rooms.addPlayer.run(info.lastInsertRowid, req.user.id, 'A');
-    return c;
-  });
-  res.json({ room: roomState(Rooms.byCode.get(code)) });
-});
+/* ── POST /api/room/create ── */
+r.post('/room/create', async (req, res) => {
+  try {
+    const existing = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (existing) return res.status(409).json({ error: 'Already in a room.' });
 
-r.post('/room/join', (req, res) => {
-  const code = String(req.body?.code || '').toUpperCase().trim();
-  const room = Rooms.byCode.get(code);
-  if (!room || room.status === 'closed') return res.status(404).json({ error: 'No open room with that code.' });
-  const already = Rooms.playerIn.get(room.id, req.user.id);
-  if (room.status === 'playing' && !already) return res.status(409).json({ error: 'Match in progress - join as spectator instead.' });
-  if (!already) {
-    const players = Rooms.players.all(room.id);
-    const bots = botsOf(room);
-    const taken = new Set([...players.map(p => p.seat), ...Object.keys(bots)]);
-    const seat = SEAT_ORDER.find(s => !taken.has(s));
-    if (!seat) return res.status(409).json({ error: 'Room is full.' });
-    leaveCurrentRoom(req.user.id);
-    Rooms.addPlayer.run(room.id, req.user.id, seat);
+    let code, tries = 0;
+    do { code = randomCode(); tries++; } while (await stmts.Rooms.byCode.get(code) && tries < 10);
+
+    const { lastInsertRowid: roomId } = await stmts.Rooms.create.run(code, req.user.id);
+    await stmts.RoomPlayers.join.run(roomId, req.user.id, 'A');
+
+    const room = await stmts.Rooms.byCode.get(code);
+    const players = await stmts.RoomPlayers.list.all(roomId);
+    res.status(201).json(formatRoom(room, players));
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
   }
-  const state = roomState(room);
-  sync(room);
-  roomBroadcast(code, 'room_joined', { userId: req.user.id, username: req.user.username });
-  res.json({ room: state });
 });
 
-r.get('/room/:code', (req, res) => {
-  const room = Rooms.byCode.get(String(req.params.code).toUpperCase());
-  if (!room) return res.status(404).json({ error: 'Room not found.' });
-  res.json({ room: roomState(room) });
-});
+/* ── POST /api/room/join ── */
+r.post('/room/join', async (req, res) => {
+  const { code } = req.body ?? {};
+  if (!code) return res.status(400).json({ error: 'code required.' });
+  try {
+    const room = await stmts.Rooms.byCode.get(code.toUpperCase());
+    if (!room) return res.status(404).json({ error: 'Room not found.' });
+    if (room.status !== 'open') return res.status(409).json({ error: 'Room is closed.' });
+    if (room.locked) return res.status(403).json({ error: 'Room is locked.' });
 
-r.post('/room/leave', (req, res) => {
-  leaveCurrentRoom(req.user.id);
-  res.json({ ok: true });
-});
+    const existing = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (existing) return res.status(409).json({ error: 'Already in a room.' });
 
-r.post('/room/ready', (req, res) => {
-  const room = Rooms.anyRoomOf.get(req.user.id);
-  if (!room || room.status !== 'open') return res.status(404).json({ error: 'You are not in an open room.' });
-  Rooms.setReady.run(req.body?.ready ? 1 : 0, room.id, req.user.id);
-  sync(room);
-  roomBroadcast(room.code, 'player_ready', { userId: req.user.id, ready: !!req.body?.ready });
-  res.json({ room: roomState(room) });
-});
+    const players = await stmts.RoomPlayers.list.all(room.id);
+    const bots = JSON.parse(room.bots || '{}');
+    const taken = takenSeats(players, bots);
+    if (taken.size >= 4) return res.status(409).json({ error: 'Room is full.' });
 
-/* ---------- manual seat selection ---------- */
-r.post('/room/seat', (req, res) => {
-  const room = Rooms.anyRoomOf.get(req.user.id);
-  if (!room || room.status !== 'open') return res.status(404).json({ error: 'You are not in an open room.' });
-  if (room.locked && room.host_id !== req.user.id) return res.status(403).json({ error: 'Seats are locked by the host.' });
-  const seat = String(req.body?.seat || '').toUpperCase();
-  if (!SEATS.includes(seat)) return res.status(400).json({ error: 'Invalid seat.' });
-  const players = Rooms.players.all(room.id);
-  if (players.some(p => p.seat === seat && p.user_id !== req.user.id))
-    return res.status(409).json({ error: 'Seat occupied.' });
-  if (botsOf(room)[seat]) return res.status(409).json({ error: 'A bot holds that seat - host can remove it.' });
-  Rooms.setSeat.run(seat, room.id, req.user.id);
-  const fresh = Rooms.byCode.get(room.code);
-  sync(fresh);
-  roomBroadcast(room.code, 'seat_changed', { userId: req.user.id, seat });
-  res.json({ room: roomState(fresh) });
-});
+    const seat = ['A', 'C', 'B', 'D'].find(s => !taken.has(s));
+    await stmts.RoomPlayers.join.run(room.id, req.user.id, seat);
 
-/* ---------- host controls ---------- */
-function asHost(req, res) {
-  const room = Rooms.anyRoomOf.get(req.user.id);
-  if (!room || room.status !== 'open') { res.status(404).json({ error: 'You are not in an open room.' }); return null; }
-  if (room.host_id !== req.user.id) { res.status(403).json({ error: 'Host only.' }); return null; }
-  return room;
-}
-
-r.post('/room/lock', (req, res) => {
-  const room = asHost(req, res); if (!room) return;
-  Rooms.setLocked.run(req.body?.locked ? 1 : 0, room.id);
-  const fresh = Rooms.byCode.get(room.code); sync(fresh);
-  res.json({ room: roomState(fresh) });
-});
-
-r.post('/room/kick', (req, res) => {
-  const room = asHost(req, res); if (!room) return;
-  const target = req.body?.userId | 0;
-  if (target === req.user.id) return res.status(400).json({ error: "You can't kick yourself." });
-  if (!Rooms.playerIn.get(room.id, target)) return res.status(404).json({ error: 'Player not in room.' });
-  Rooms.removePlayer.run(room.id, target);
-  notifyUser(target, 'kicked', { code: room.code });
-  const fresh = Rooms.byCode.get(room.code); sync(fresh);
-  roomBroadcast(room.code, 'room_left', { userId: target });
-  res.json({ room: roomState(fresh) });
-});
-
-r.post('/room/transfer', (req, res) => {
-  const room = asHost(req, res); if (!room) return;
-  const target = req.body?.userId | 0;
-  if (!Rooms.playerIn.get(room.id, target)) return res.status(404).json({ error: 'Player not in room.' });
-  Rooms.setHost.run(target, room.id);
-  const fresh = Rooms.byCode.get(room.code); sync(fresh);
-  res.json({ room: roomState(fresh) });
-});
-
-r.post('/room/close', (req, res) => {
-  const room = asHost(req, res); if (!room) return;
-  Rooms.close.run(room.id);
-  roomBroadcast(room.code, 'room_closed', {});
-  res.json({ ok: true });
-});
-
-r.post('/room/bot/add', (req, res) => {
-  const room = asHost(req, res); if (!room) return;
-  const seat = String(req.body?.seat || '').toUpperCase();
-  const diff = ['easy', 'normal', 'hard'].includes(req.body?.difficulty) ? req.body.difficulty : 'normal';
-  if (!SEATS.includes(seat)) return res.status(400).json({ error: 'Invalid seat.' });
-  const players = Rooms.players.all(room.id);
-  if (players.some(p => p.seat === seat)) return res.status(409).json({ error: 'A player holds that seat.' });
-  const bots = botsOf(room); bots[seat] = diff;
-  Rooms.setBots.run(JSON.stringify(bots), room.id);
-  const fresh = Rooms.byCode.get(room.code); sync(fresh);
-  res.json({ room: roomState(fresh) });
-});
-
-r.post('/room/bot/remove', (req, res) => {
-  const room = asHost(req, res); if (!room) return;
-  const seat = String(req.body?.seat || '').toUpperCase();
-  const bots = botsOf(room); delete bots[seat];
-  Rooms.setBots.run(JSON.stringify(bots), room.id);
-  const fresh = Rooms.byCode.get(room.code); sync(fresh);
-  res.json({ room: roomState(fresh) });
-});
-
-/* ---------- friend invites ---------- */
-r.post('/room/invite', (req, res) => {
-  if (req.user.isGuest) return res.status(403).json({ error: 'Friend invites need an account - share the room code or link instead.' });
-  const room = Rooms.anyRoomOf.get(req.user.id);
-  if (!room || room.status !== 'open') return res.status(404).json({ error: 'You are not in an open room.' });
-  const target = Users.byUsername.get(String(req.body?.username || ''));
-  if (!target) return res.status(404).json({ error: 'No such user.' });
-  pushNotification(target.id, 'room_invite', { code: room.code, from: req.user.username });
-  res.json({ ok: true });
-});
-
-/* ---------- start match (host) ---------- */
-r.post('/room/start', (req, res) => {
-  const room = asHost(req, res); if (!room) return;
-  if (matchFor(room.code)) return res.status(409).json({ error: 'Match already running.' });
-  const players = Rooms.players.all(room.id);
-  const bots = botsOf(room);
-  const seating = {};
-  for (const s of SEATS) {
-    const p = players.find(x => x.seat === s);
-    if (p) seating[s] = { userId: p.user_id, username: p.username, isGuest: !!p.is_guest };
-    else if (bots[s]) seating[s] = { bot: bots[s] };
-    else return res.status(409).json({ error: `Seat ${s} is empty - fill it with a player or a bot.` });
+    const updatedPlayers = await stmts.RoomPlayers.list.all(room.id);
+    res.json(formatRoom(room, updatedPlayers));
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
   }
-  const notReady = players.filter(p => p.user_id !== room.host_id && !p.ready);
-  if (notReady.length) return res.status(409).json({ error: 'All players must be ready.' });
+});
 
-  Rooms.setStatus.run('playing', room.id);
-  const fresh = Rooms.byCode.get(room.code);
-  sync(fresh);
-  new Match(fresh, seating, getIO(), (code) => {
-    const rr = Rooms.byCode.get(code);
-    if (rr) {
-      Rooms.setStatus.run('open', rr.id);
-      // clear ready flags for a rematch
-      for (const p of Rooms.players.all(rr.id)) Rooms.setReady.run(0, rr.id, p.user_id);
-      sync(Rooms.byCode.get(code));
+/* ── GET /api/room/:code ── */
+r.get('/room/:code', async (req, res) => {
+  try {
+    const room = await stmts.Rooms.byCode.get(req.params.code.toUpperCase());
+    if (!room) return res.status(404).json({ error: 'Room not found.' });
+    const players = await stmts.RoomPlayers.list.all(room.id);
+    res.json(formatRoom(room, players));
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/leave ── */
+r.post('/room/leave', async (req, res) => {
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    await stmts.RoomPlayers.leave.run(rp.room_id, req.user.id);
+
+    const remaining = await stmts.RoomPlayers.list.all(rp.room_id);
+    if (remaining.length === 0) {
+      await stmts.Rooms.close.run(rp.room_id);
+    } else {
+      const room = await stmts.Rooms.byId.get(rp.room_id);
+      if (room?.host_id === req.user.id && remaining[0]) {
+        await stmts.Rooms.transferHost.run(remaining[0].user_id, rp.room_id);
+      }
     }
-  });
-  roomBroadcast(room.code, 'match_started', { code: room.code });
-  res.json({ ok: true });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/ready ── */
+r.post('/room/ready', async (req, res) => {
+  const { ready } = req.body ?? {};
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    await stmts.RoomPlayers.setReady.run(ready ? 1 : 0, rp.room_id, req.user.id);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/seat ── */
+r.post('/room/seat', async (req, res) => {
+  const { seat } = req.body ?? {};
+  if (!['A', 'B', 'C', 'D'].includes(seat))
+    return res.status(400).json({ error: 'Invalid seat.' });
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    const taken = await stmts.RoomPlayers.bySeat.get(rp.room_id, seat);
+    if (taken && taken.user_id !== req.user.id)
+      return res.status(409).json({ error: 'Seat taken.' });
+    await stmts.RoomPlayers.changeSeat.run(seat, rp.room_id, req.user.id);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/lock ── */
+r.post('/room/lock', async (req, res) => {
+  const { locked } = req.body ?? {};
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    const room = await stmts.Rooms.byId.get(rp.room_id);
+    if (room?.host_id !== req.user.id) return res.status(403).json({ error: 'Not the host.' });
+    await stmts.Rooms.setLocked.run(locked ? 1 : 0, room.id);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/kick ── */
+r.post('/room/kick', async (req, res) => {
+  const { userId } = req.body ?? {};
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    const room = await stmts.Rooms.byId.get(rp.room_id);
+    if (room?.host_id !== req.user.id) return res.status(403).json({ error: 'Not the host.' });
+    await stmts.RoomPlayers.leave.run(rp.room_id, userId);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/transfer ── */
+r.post('/room/transfer', async (req, res) => {
+  const { userId } = req.body ?? {};
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    const room = await stmts.Rooms.byId.get(rp.room_id);
+    if (room?.host_id !== req.user.id) return res.status(403).json({ error: 'Not the host.' });
+    await stmts.Rooms.transferHost.run(userId, room.id);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/close ── */
+r.post('/room/close', async (req, res) => {
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    const room = await stmts.Rooms.byId.get(rp.room_id);
+    if (room?.host_id !== req.user.id) return res.status(403).json({ error: 'Not the host.' });
+    await stmts.Rooms.close.run(room.id);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/bot/add ── */
+r.post('/room/bot/add', async (req, res) => {
+  const { seat, difficulty } = req.body ?? {};
+  if (!['A', 'B', 'C', 'D'].includes(seat))
+    return res.status(400).json({ error: 'Invalid seat.' });
+  if (!['easy', 'normal', 'hard'].includes(difficulty))
+    return res.status(400).json({ error: 'difficulty must be easy, normal or hard.' });
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    const room = await stmts.Rooms.byId.get(rp.room_id);
+    if (room?.host_id !== req.user.id) return res.status(403).json({ error: 'Not the host.' });
+
+    // Check no human is in that seat
+    const humanInSeat = await stmts.RoomPlayers.bySeat.get(rp.room_id, seat);
+    if (humanInSeat) return res.status(409).json({ error: 'A human already occupies that seat.' });
+
+    const bots = JSON.parse(room.bots || '{}');
+    bots[seat] = difficulty;
+    await stmts.Rooms.setBots.run(JSON.stringify(bots), room.id);
+
+    const freshRoom = await stmts.Rooms.byId.get(room.id);
+    const players = await stmts.RoomPlayers.list.all(room.id);
+    res.json(formatRoom(freshRoom, players));
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/bot/remove ── */
+r.post('/room/bot/remove', async (req, res) => {
+  const { seat } = req.body ?? {};
+  if (!['A', 'B', 'C', 'D'].includes(seat))
+    return res.status(400).json({ error: 'Invalid seat.' });
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    const room = await stmts.Rooms.byId.get(rp.room_id);
+    if (room?.host_id !== req.user.id) return res.status(403).json({ error: 'Not the host.' });
+    const bots = JSON.parse(room.bots || '{}');
+    delete bots[seat];
+    await stmts.Rooms.setBots.run(JSON.stringify(bots), room.id);
+
+    const freshRoom = await stmts.Rooms.byId.get(room.id);
+    const players = await stmts.RoomPlayers.list.all(room.id);
+    res.json(formatRoom(freshRoom, players));
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/invite ── */
+r.post('/room/invite', async (req, res) => {
+  const { username } = req.body ?? {};
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    const target = await stmts.Users.byUsername.get(username);
+    if (!target) return res.status(404).json({ error: 'User not found.' });
+    await stmts.Notifications.create.run(
+      target.id, 'room_invite',
+      JSON.stringify({ from: req.user.id, username: req.user.username, code: rp.code })
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+/* ── POST /api/room/start ── */
+r.post('/room/start', async (req, res) => {
+  try {
+    const rp = await stmts.RoomPlayers.byUser.get(req.user.id);
+    if (!rp) return res.status(404).json({ error: 'Not in a room.' });
+    const room = await stmts.Rooms.byId.get(rp.room_id);
+    if (room?.host_id !== req.user.id) return res.status(403).json({ error: 'Not the host.' });
+    const players = await stmts.RoomPlayers.list.all(room.id);
+    const bots = JSON.parse(room.bots || '{}');
+    const taken = takenSeats(players, bots);
+    if (taken.size < 4) return res.status(400).json({ error: 'Need 4 players.' });
+    res.json({ ok: true, code: room.code });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 export default r;
