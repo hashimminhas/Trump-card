@@ -81,6 +81,7 @@ Deployed to **AWS EC2** (eu-north-1, Stockholm) across two instances:
 | Database | SQLite via `node:sqlite` |
 | Auth | JWT + bcryptjs |
 | Containers | Docker + Docker Compose |
-| CI/CD | GitHub Actions → Ansible → EC2 |
+| Orchestration | Kubernetes (Amazon EKS) + Helm |
+| CI/CD | GitHub Actions → Ansible/Helm → EC2/EKS |
 | Monitoring | Prometheus + Grafana |
-| Infrastructure | Terraform + AWS EC2 |
+| Infrastructure | Terraform + AWS EC2, EKS, RDS, Lambda, and SNS |

@@ -324,3 +324,5 @@ jobs:
             --set secret.jwtSecret=${{ secrets.EC_JWT_SECRET }} \
             --set backend.tag=sha-${{ github.sha }} \
             --set frontend.tag=sha-${{ github.sha }}
+          kubectl rollout restart deployment/trump-card-api
+          kubectl rollout restart deployment/trump-card-web

@@ -55,5 +55,3 @@ services:
 volumes:
   trump_db:
     name: trump_card_db_data
-  grafana_data:
-    name: trump_card_grafana_data
