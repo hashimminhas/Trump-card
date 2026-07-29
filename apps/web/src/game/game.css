@@ -395,10 +395,10 @@ body.lt .card .corner{font-size:16px;}
   .rp-A { left:50%; top:47%; transform:translate(-50%,-50%) translateY(136px) rotate(-3deg); }
 
   /* Seats */
-  .seat-C { top:3%;    left:50%;  transform:translateX(-50%); right:auto; bottom:auto; }
+  .seat-C { top:1%;    left:50%;  transform:translateX(-50%); right:auto; bottom:auto; }
   .seat-B { left:2%;   top:46%;   transform:translateY(-50%); right:auto; bottom:auto; }
   .seat-D { right:2%;  top:46%;   transform:translateY(-50%); left:auto;  bottom:auto; }
-  .seat-A { bottom:2%; left:50%;  transform:translateX(-50%); top:auto; }
+  .seat-A { bottom:0; left:50%;  transform:translateX(-50%); top:auto; }
   .avatar { width: 56px; height: 56px; font-size: 21px; }
 
   /* Hand */
@@ -419,7 +419,7 @@ body.lt .card .corner{font-size:16px;}
   .hand .card:nth-child(13) { transform: rotate(16deg)  translateY(36px); }
 
   .banner {
-    top: 18%; left:50%; transform:translateX(-50%) translateY(-8px);
+    top: 14%; left:50%; transform:translateX(-50%) translateY(-8px);
     background:rgba(10,15,28,.90); border:1px solid rgba(255,255,255,.1);
     border-radius:20px; padding:6px 20px; backdrop-filter:blur(8px); font-size:13px;
   }
@@ -535,7 +535,7 @@ body.lt .card .corner{font-size:16px;}
 }
 
 /* ================================================================
-   MOBILE  ≤450px   (360×800, 390×844, 393×873)  — DO NOT TOUCH
+   MOBILE  ≤450px   (360×800, 390×844, 393×873)
    ================================================================ */
 @media (max-width: 450px) {
   .hud {
@@ -559,7 +559,7 @@ body.lt .card .corner{font-size:16px;}
   .table-oval { display: none !important; }
 
   .pile-core {
-    top: 40%; width: 115px; height: 115px; padding: 8px;
+    top: 48%; width: 115px; height: 115px; padding: 8px;
     background: radial-gradient(circle at 50% 40%, rgba(242,179,61,.08) 0%, rgba(10,16,32,.85) 100%);
     border: 1.5px solid rgba(242,179,61,.4);
   }
@@ -572,23 +572,31 @@ body.lt .card .corner{font-size:16px;}
   .pile-core .pc-status { font-size: 8px; padding: 1px 7px; margin-top: 2px; }
 
   .trick-slot,.rp-slot { width: 50px; height: 71px; }
-  .slot-C { left:50%; top:40%; transform:translate(-50%,-50%) translateY(-110px) rotate(3deg); }
-  .slot-B { left:50%; top:40%; transform:translate(-50%,-50%) translateX(-112px) rotate(-6deg); }
-  .slot-D { left:50%; top:40%; transform:translate(-50%,-50%) translateX(112px) rotate(6deg); }
-  .slot-A { left:50%; top:40%; transform:translate(-50%,-50%) translateY(110px) rotate(-3deg); }
-  .rp-stage .pile-core { top:40%; }
-  .rp-C { left:50%; top:40%; transform:translate(-50%,-50%) translateY(-110px) rotate(3deg); }
-  .rp-B { left:50%; top:40%; transform:translate(-50%,-50%) translateX(-112px) rotate(-6deg); }
-  .rp-D { left:50%; top:40%; transform:translate(-50%,-50%) translateX(112px) rotate(6deg); }
-  .rp-A { left:50%; top:40%; transform:translate(-50%,-50%) translateY(110px) rotate(-3deg); }
+  .slot-C { left:50%; top:48%; transform:translate(-50%,-50%) translateY(-110px); }
+  .slot-B { left:50%; top:48%; transform:translate(-50%,-50%) translateX(-112px); }
+  .slot-D { left:50%; top:48%; transform:translate(-50%,-50%) translateX(112px); }
+  .slot-A { left:50%; top:48%; transform:translate(-50%,-50%) translateY(110px); }
+  .rp-stage .pile-core { top:48%; }
+  .rp-C { left:50%; top:48%; transform:translate(-50%,-50%) translateY(-110px); }
+  .rp-B { left:50%; top:48%; transform:translate(-50%,-50%) translateX(-112px); }
+  .rp-D { left:50%; top:48%; transform:translate(-50%,-50%) translateX(112px); }
+  .rp-A { left:50%; top:48%; transform:translate(-50%,-50%) translateY(110px); }
 
   .seat { gap: 3px; }
-  .seat-C { top:2%;    left:50%;  transform:translateX(-50%); right:auto; bottom:auto; }
-  .seat-B { left:10px; top:40%;   transform:translateY(-50%); right:auto; bottom:auto; }
-  .seat-D { right:8px; top:40%;   transform:translateY(-50%); left:auto;  bottom:auto; }
-  .seat-A { position:absolute; bottom:30px; left:50%; top:auto; transform:translateX(-50%); z-index:12; }
+  .seat-C { top:4%;    left:50%; transform:translateX(-50%); right:auto; bottom:auto; }
+  .seat-B { left:8px;  top:35%;  transform:translateY(-50%); right:auto; bottom:auto; }
+  .seat-D { right:8px; top:35%;  transform:translateY(-50%); left:auto;  bottom:auto; }
+  .seat-A {
+    display:flex; position:absolute; bottom:8px; left:50%; top:auto;
+    transform:translateX(-50%); z-index:12;
+  }
 
-  .avatar { width: 52px; height: 52px; font-size: 16px; }
+  .avatar {
+    width: 46px; height: 46px; font-size: 16px;
+    background: rgba(10,16,32,.48);
+  }
+  .seat.team-ac .avatar { border-color:rgba(224,169,62,.48); }
+  .seat.team-bd .avatar { border-color:rgba(79,182,201,.48); }
   .seat .label   { font-size: 9.5px; }
   .seat .cards-left { font-size: 9px; }
 
@@ -597,7 +605,7 @@ body.lt .card .corner{font-size:16px;}
   .card .corner { font-size: 12px; }
   .card .corner small { font-size: 10px; }
 
-  .hand { left:50%; transform:translateX(-50%); bottom:120px; z-index:15; }
+  .hand { left:50%; transform:translateX(-50%); bottom:96px; z-index:15; }
   .hand .card { margin: 0 -13px; }
   .hand .card:nth-child(1)  { transform: rotate(-12deg) translateY(18px); }
   .hand .card:nth-child(2)  { transform: rotate(-9deg)  translateY(10px); }
@@ -614,7 +622,7 @@ body.lt .card .corner{font-size:16px;}
   .hand .card:nth-child(13) { transform: rotate(16deg)  translateY(36px); }
 
   .banner {
-    top: 27%; left:50%; transform:translateX(-50%) translateY(-8px);
+    top: 16%; left:50%; transform:translateX(-50%) translateY(-8px);
     background:rgba(10,15,28,.90); border:1px solid rgba(255,255,255,.1);
     border-radius:16px; padding:5px 14px; font-size:12px;
     backdrop-filter:blur(6px); max-width:80vw; text-align:center;
