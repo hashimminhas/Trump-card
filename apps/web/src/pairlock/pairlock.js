@@ -14,7 +14,7 @@ export function mountPairLock(container, config = {}) {
     </div>
 
     <div class="zone">
-      <div class="zone-label">Bot — <span id="botCount">4</span> in hand</div>
+      <div class="zone-label">Bot <span id="botCount">4</span> in hand</div>
       <div class="opp-hand" id="oppHand"></div>
     </div>
     <div class="zone">
@@ -39,7 +39,7 @@ export function mountPairLock(container, config = {}) {
       <div class="collection-row" id="youCollection"></div>
     </div>
     <div class="zone">
-      <div class="zone-label">Your hand — <span id="youCount">4</span> cards</div>
+      <div class="zone-label">Your hand <span id="youCount">4</span> cards</div>
       <div class="row" id="hand"></div>
     </div>
 
@@ -101,7 +101,7 @@ export function mountPairLock(container, config = {}) {
     document.getElementById('log').innerHTML='';
     document.getElementById('overlay').classList.remove('show');
     for(let i=0;i<4;i++){hands.you.push(deck.pop());hands.bot.push(deck.pop());ground.push(deck.pop());}
-    log('sys','New game — 4 to you, 4 to bot, 4 on the ground.');
+    log('sys','New game: 4 to you, 4 to bot, 4 on the ground.');
     render(true);
     beginTurn();
   }
@@ -143,13 +143,23 @@ export function mountPairLock(container, config = {}) {
     const seq=pileSequence(collections[who]);
     return seq.length ? seq[seq.length-1] : null;
   }
+  function removeTopPile(who){
+    const col=collections[who];
+    if(!col.length) return [];
+    const rank=col[col.length-1].rank;
+    let start=col.length-1;
+    while(start>0 && col[start-1].rank===rank) start--;
+    const taken=col.slice(start);
+    collections[who]=col.slice(0,start);
+    return taken;
+  }
 
   function refreshLocks(){
     for(const who of ['you','bot']){
       const top=topPile(who);
       if(top && top.cards.length===4 && !lockedRanks.has(top.rank)){
         lockedRanks.add(top.rank);
-        log('lock',`🔒 ${who==='you'?'You':'Bot'} LOCKED all four ${RANK_LABEL(top.rank)}s on the top pile — it can never be taken.`);
+        log('lock',`🔒 ${who==='you'?'You':'Bot'} LOCKED all four ${RANK_LABEL(top.rank)}s on the top pile. It can never be taken.`);
       }
     }
   }
@@ -172,9 +182,8 @@ export function mountPairLock(container, config = {}) {
       taken.push(...g);
     }
     if(opts.opp){
-      const o=cardsOfRank(collections[opp],rank);
-      collections[opp]=collections[opp].filter(c=>c.rank!==rank);
-      taken.push(...o);
+      const exposed=topPile(opp);
+      if(exposed?.rank===rank) taken.push(...removeTopPile(opp));
     }
     collections[actor].push(handCard, ...taken);
     refreshLocks();
@@ -279,7 +288,7 @@ export function mountPairLock(container, config = {}) {
     const card=hands.you.find(c=>c.id===id); if(!card) return;
     discardArmed=false;
     ground.push(card); hands.you=hands.you.filter(c=>c.id!==card.id);
-    log('you',`You threw ${cardText(card)} onto the Ground — turn ends.`);
+    log('you',`You threw ${cardText(card)} onto the Ground. Turn ends.`);
     render(); highlightDrawn('ground',card.id,'draw-pop');
     endHumanTurn();
   }
@@ -345,7 +354,7 @@ export function mountPairLock(container, config = {}) {
       const r=hc.rank;
       const g=cardsOfRank(ground,r);
       const oppTop = topPile('you');
-      const o=(oppTop && oppTop.rank === r && !lockedRanks.has(r)) ? cardsOfRank(collections.you,r) : [];
+      const o=(oppTop && oppTop.rank === r && !lockedRanks.has(r)) ? oppTop.cards : [];
       if(g.length+o.length>0){
         const val=(g.length+o.length)*cardPoints(r) + (o.length?5:0);
         if(val>bestVal){ bestVal=val; best={hc,ground:g.length>0,opp:o.length>0}; }
@@ -372,7 +381,7 @@ export function mountPairLock(container, config = {}) {
     if(hands.bot.length===0){ busy=false; turn='you'; setTimeout(beginTurn,300); return; }
     const card=hands.bot.reduce((lo,c)=>cardPoints(c.rank)<cardPoints(lo.rank)||(cardPoints(c.rank)===cardPoints(lo.rank)&&c.rank<lo.rank)?c:lo, hands.bot[0]);
     ground.push(card); hands.bot=hands.bot.filter(c=>c.id!==card.id);
-    log('bot',`Bot threw ${cardText(card)} onto the Ground — turn ends.`); render();
+    log('bot',`Bot threw ${cardText(card)} onto the Ground. Turn ends.`); render();
     (function ref(){ if(deck.length>0&&hands.bot.length<4){hands.bot.push(deck.pop());render();setTimeout(ref,150);} else { render(); busy=false; turn='you'; setTimeout(beginTurn,360);} })();
   }
 
@@ -389,7 +398,7 @@ export function mountPairLock(container, config = {}) {
     if(you>bot){title='You Win! 🏆';res=`You finished ${you} to ${bot}.`;}
     else if(bot>you){title='Bot Wins';res=`Bot finished ${bot} to ${you}.`;}
     else{title="It's a Tie";res=`Both finished on ${you}.`;}
-    log('sys',`Game over — You ${you}, Bot ${bot}. Locked sets: ${lockedRanks.size}.`);
+    log('sys',`Game over: You ${you}, Bot ${bot}. Locked sets: ${lockedRanks.size}.`);
     document.getElementById('winTitle').textContent=title;
     document.getElementById('winRes').textContent=res;
     document.getElementById('finalYouScore').textContent=you;
@@ -419,7 +428,7 @@ export function mountPairLock(container, config = {}) {
     document.getElementById('pileStack').style.opacity=deck.length>0?'1':'.25';
 
     const g=document.getElementById('ground');
-    if(ground.length===0){ g.innerHTML='<div class="empty-note">— empty —</div>'; g.classList.add('empty-row'); }
+    if(ground.length===0){ g.innerHTML='<div class="empty-note">empty</div>'; g.classList.add('empty-row'); }
     else{
       g.classList.remove('empty-row');
       const ranks=groundRanks();
@@ -434,7 +443,7 @@ export function mountPairLock(container, config = {}) {
     }
 
     const h=document.getElementById('hand');
-    h.innerHTML=hands.you.length?hands.you.map(c=>cardHTML(c)).join(''):'<div class="empty-note">— empty —</div>';
+    h.innerHTML=hands.you.length?hands.you.map(c=>cardHTML(c)).join(''):'<div class="empty-note">empty</div>';
     h.classList.toggle('empty-row',hands.you.length===0);
     if(initial)[...h.children].forEach((el,i)=>{el.classList.add('deal');el.style.animationDelay=(0.2+i*0.05)+'s';});
     [...h.children].forEach(el=>{ const id=el.getAttribute&&el.getAttribute('data-id'); if(!id)return;
@@ -451,15 +460,17 @@ export function mountPairLock(container, config = {}) {
     const col=collections[who];
     if(col.length===0){ el.innerHTML='<div class="empty-note">no cards collected yet</div>'; return; }
     const seq=pileSequence(col);
-    const topIdx=seq.length-1;
+    // A collection behaves like a stack: only its newest rank-group is
+    // exposed. Older groups stay hidden until the exposed group is stolen.
+    const top=seq[seq.length-1];
     const handRank = selHandId ? hands.you.find(c=>c.id===selHandId)?.rank : null;
-    el.innerHTML=seq.map((p,idx)=>{
-      const isTop = idx===topIdx;
-      const locked=lockedRanks.has(p.rank) && isTop ? true : (lockedRanks.has(p.rank) && p.cards.length===4);
-      const picked = (clickable && handRank === p.rank && !locked);
-      return `<div class="pile ${locked?'locked':''} ${isTop?'toppile':''} ${picked?'pick-pile':''}" data-zone="opp" data-rank="${p.rank}" data-top="${isTop?1:0}">`+
-        p.cards.map(c=>cardHTML(c,'sm')).join('')+`</div>`;
-    }).join('');
+    const locked=lockedRanks.has(top.rank) && top.cards.length===4;
+    // Highlight only the exposed group. This applies to either player's
+    // collection; buried matching ranks must never receive a target outline.
+    const picked=handRank===top.rank && !locked;
+    el.innerHTML=`<div class="pile ${locked?'locked':''} toppile ${picked?'pick-pile':''}"
+      data-zone="${clickable?'opp':'own'}" data-rank="${top.rank}" data-top="1">`+
+      top.cards.map(c=>cardHTML(c,'sm')).join('')+`</div>`;
   }
 
   function highlightDrawn(containerId,cardId,cls='draw-pop'){
@@ -474,8 +485,8 @@ export function mountPairLock(container, config = {}) {
   function setTurnStatus(){
     if(turn!=='you'||gameOver){ return; }
     if(discardArmed){ setStatus('Select a card to throw onto the Ground'); return; }
-    if(hands.you.length>=5){ setStatus('Throw a Card to end your turn — or capture first'); }
-    else if(deck.length===0 && hands.you.length>0){ setStatus('Throw a Card to end your turn — or capture first'); }
+    if(hands.you.length>=5){ setStatus('Throw a Card to end your turn or capture first'); }
+    else if(deck.length===0 && hands.you.length>0){ setStatus('Throw a Card to end your turn or capture first'); }
     else if(deck.length===0){ setStatus('Your Turn'); }
     else { setStatus('Draw a Card'); }
   }

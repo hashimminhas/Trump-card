@@ -14,7 +14,8 @@ import Forgot from './screens/Forgot';
 import Reset from './screens/Reset';
 import { Toasts } from './components/ui';
 import { Shell } from './components/Shell';
-import React from 'react';
+import { trackPageView } from './analytics';
+import React, { useEffect } from 'react';
 
 // Hub removed — Play is now the home page
 
@@ -26,9 +27,20 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return children;
 }
 
+function AnalyticsPageViews() {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <AuthProvider>
+      <AnalyticsPageViews />
       <Routes>
         {/* Auth pages — no shell */}
         <Route path="/login"          element={<Login />} />
