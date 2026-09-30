@@ -27,6 +27,6 @@
   "devDependencies": {
     "cross-env": "^10.1.0",
     "eslint": "^8.57.1",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.4"
   }
 }
